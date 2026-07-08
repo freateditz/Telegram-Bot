@@ -136,6 +136,8 @@ bot.on("callback_query", async (query) => {
             chatId,
 `❌ Verification Failed
 
+please subscribe to the YouTube channel first.
+
 Please join our Telegram channel first.
 
 Then click Verify again.`
