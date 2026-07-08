@@ -17,12 +17,12 @@ module.exports = (bot, isVerified) => {
         // Send download information
         await bot.sendMessage(
             chatId,
-`🔥 *Topaz Video AI*
+`🔥 *Topaz Video AI download Both files *
 
-⬇ *Download Link*
+⬇ * Topaz Download Link*
 ${resources.topaz.download}
 
-🛠 *Fix File*
+🛠 *Fix File for Topaz*
 ${resources.topaz.fix}`,
             {
                 parse_mode: "Markdown"
