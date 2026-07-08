@@ -1,7 +1,7 @@
 module.exports = {
     topaz: {
-        download: "https://your-download-link.com",
-        fix: "https://your-fix-file-link.com",
+        download: "https://mega.nz/folder/RFNyBBqb#njLs0aEMbASRwcsWka9n7w",
+        fix: "https://drive.google.com/file/d/1gbBavelChT9BWbpyngP7md4vVnIVVUOr/view?usp=sharing",
 
         tutorial: {
             channelId: -3943904498,
