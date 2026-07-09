@@ -17,7 +17,9 @@ module.exports = (bot, isVerified) => {
         // Send download information
         await bot.sendMessage(
             chatId,
-`🔥 *Topaz Video AI download Both files *
+`🔥 *Topaz Video AI download Both files 
+Files Password :- freat
+if freat no works try:- 123*
 
 ⬇ * Topaz Download Link*
 ${resources.topaz.download}
