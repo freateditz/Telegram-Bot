@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Platform {
+  id        Int        @id @default(autoincrement())
+  name      String
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+  resources Resource[]
+}
+
+model Category {
+  id           Int        @id @default(autoincrement())
+  name         String
+  slug         String     @unique
+  displayOrder Int        @default(0)
+  createdAt    DateTime   @default(now())
+  resources    Resource[]
+}
+
+model Resource {
+  id                Int       @id @default(autoincrement())
+  name              String
+  slug              String    @unique
+  platformId        Int
+  categoryId        Int
+  downloadLink      String
+  fixLink           String
+  tutorialChannelId String
+  tutorialMessageId Int
+  displayOrder      Int       @default(0)
+  isVisible         Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  platform          Platform  @relation(fields: [platformId], references: [id], onDelete: Restrict)
+  category          Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([platformId])
+  @@index([categoryId])
+  @@index([displayOrder])
+}
+
+model Setting {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  telegramId String   @unique
+  verified   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
