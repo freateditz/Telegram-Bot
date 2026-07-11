@@ -1,6 +1,7 @@
 const createApp = require("./app");
 const env = require("./config/env");
 const { seedDatabase } = require("./database/seedService");
+const { startBot } = require("../../bot/bot");
 
 let server;
 
@@ -13,6 +14,7 @@ async function startServer() {
     const port = env.port;
 
     await seedDatabase();
+    await startBot();
 
     return new Promise((resolve) => {
         server = app.listen(port, () => {

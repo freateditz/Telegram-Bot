@@ -9,16 +9,23 @@ const verificationRoutes = require("./verificationRoutes");
 const settingRoutes = require("./settingRoutes");
 const userRoutes = require("./userRoutes");
 
+/**
+ * Route composition.
+ *
+ * `app.js` mounts this router at `/api`, so the prefixes below are
+ * RELATIVE to `/api`. If you add a new resource, append it here with
+ * its `/api`-relative prefix and it will be reachable at `/api/<x>`.
+ */
 const router = express.Router();
 
 router.use(healthRoutes);
-router.use("/api/platforms", platformRoutes);
-router.use("/api/categories", categoryRoutes);
-router.use("/api/resources", resourceRoutes);
-router.use("/api/menu", menuRoutes);
-router.use("/api/resource", publicResourceRoutes);
-router.use("/api/verification", verificationRoutes);
-router.use("/api/settings", settingRoutes);
-router.use("/api/users", userRoutes);
+router.use("/platforms", platformRoutes);
+router.use("/categories", categoryRoutes);
+router.use("/resources", resourceRoutes);
+router.use("/menu", menuRoutes);
+router.use("/resource", publicResourceRoutes);
+router.use("/verification", verificationRoutes);
+router.use("/settings", settingRoutes);
+router.use("/users", userRoutes);
 
 module.exports = router;

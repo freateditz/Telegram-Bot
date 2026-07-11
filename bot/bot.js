@@ -13,8 +13,8 @@ function getBackendBaseUrl() {
 function createBotClient() {
     const botToken = process.env.BOT_TOKEN;
 
-    if (!botToken) {
-        throw new Error("BOT_TOKEN missing in .env");
+    if (!botToken || !botToken.trim()) {
+        throw new Error("BOT_TOKEN is missing or empty in environment variables");
     }
 
     return new TelegramBot(botToken, {
@@ -49,8 +49,8 @@ async function startBot() {
 
     botInstance = bot;
 
-    console.log("✅ Bot Started");
-    console.log("🤖 Bot is running...");
+    console.log("✅ Telegram Bot Started");
+    console.log("✅ Polling Started");
 
     return botInstance;
 }

@@ -19,6 +19,16 @@ function errorHandler(error, req, res, next) {
         });
     }
 
+    // CORS rejection — surface a 403 with a clear message rather than
+    // a generic 500. The browser will swallow the body anyway, but
+    // this helps when debugging with curl or in logs.
+    if (error && /^CORS:/.test(error.message || "")) {
+        return res.status(403).json({
+            ok: false,
+            error: error.message,
+        });
+    }
+
     if (error?.code === "P2002") {
         return res.status(409).json({
             ok: false,
