@@ -1,0 +1,333 @@
+import { useEffect, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Field } from "@/components/ui/field";
+import { SubmitActions } from "@/components/ui/submit-actions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { usePlatforms } from "@/hooks/usePlatforms";
+import { useCategories } from "@/hooks/useCategories";
+import {
+  resourceFormSchema,
+  type ResourceFormValues,
+} from "@/lib/resourceSchema";
+import { toSlug } from "@/lib/slug";
+import type { Resource } from "@/types";
+
+interface ResourceFormProps {
+  defaultValues?: Resource;
+  onSubmit: (values: ResourceFormValues) => Promise<void> | void;
+  submitLabel?: string;
+  onCancel?: () => void;
+}
+
+const EMPTY_DEFAULTS: ResourceFormValues = {
+  name: "",
+  slug: "",
+  description: "",
+  version: "",
+  platformId: 0,
+  categoryId: 0,
+  downloadLink: "",
+  fixLink: "",
+  tutorialChannelId: "",
+  tutorialMessageId: 0,
+  displayOrder: 0,
+  isVisible: true,
+};
+
+export function ResourceForm({
+  defaultValues,
+  onSubmit,
+  submitLabel = "Save",
+  onCancel,
+}: ResourceFormProps) {
+  const platformsQuery = usePlatforms();
+  const categoriesQuery = useCategories();
+  const [slugTouched, setSlugTouched] = useState(Boolean(defaultValues?.slug));
+
+  const form = useForm<ResourceFormValues>({
+    resolver: zodResolver(resourceFormSchema),
+    defaultValues: defaultValues
+      ? mapResourceToForm(defaultValues)
+      : EMPTY_DEFAULTS,
+    mode: "onTouched",
+  });
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = form;
+
+  // Auto-derive slug from name until the user manually edits it.
+  const name = watch("name");
+  useEffect(() => {
+    if (!slugTouched && name) {
+      setValue("slug", toSlug(name), { shouldValidate: true });
+    }
+  }, [name, slugTouched, setValue]);
+
+  const isLoadingOptions =
+    platformsQuery.isLoading || categoriesQuery.isLoading;
+
+  return (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="grid gap-4"
+      noValidate
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field
+          label="Name"
+          id="name"
+          error={errors.name?.message}
+        >
+          <Input
+            id="name"
+            placeholder="Adobe Premiere Pro"
+            autoComplete="off"
+            {...register("name")}
+          />
+        </Field>
+
+        <Field label="Slug" id="slug" error={errors.slug?.message}>
+          <Input
+            id="slug"
+            placeholder="adobe-premiere-pro"
+            autoComplete="off"
+            {...register("slug", {
+              onChange: () => setSlugTouched(true),
+            })}
+          />
+        </Field>
+      </div>
+
+      <Field
+        label="Description"
+        id="description"
+        error={errors.description?.message}
+      >
+        <Textarea
+          id="description"
+          placeholder="Optional short description"
+          rows={3}
+          {...register("description")}
+        />
+      </Field>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field label="Version" id="version" error={errors.version?.message}>
+          <Input
+            id="version"
+            placeholder="2025 v25.0"
+            autoComplete="off"
+            {...register("version")}
+          />
+        </Field>
+
+        <Field
+          label="Platform"
+          id="platformId"
+          error={errors.platformId?.message}
+        >
+          <Controller
+            control={control}
+            name="platformId"
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(value) => field.onChange(Number(value))}
+                disabled={isLoadingOptions}
+              >
+                <SelectTrigger id="platformId">
+                  <SelectValue
+                    placeholder={
+                      platformsQuery.isLoading
+                        ? "Loading..."
+                        : "Select platform"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {platformsQuery.data?.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
+
+        <Field
+          label="Category"
+          id="categoryId"
+          error={errors.categoryId?.message}
+        >
+          <Controller
+            control={control}
+            name="categoryId"
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(value) => field.onChange(Number(value))}
+                disabled={isLoadingOptions}
+              >
+                <SelectTrigger id="categoryId">
+                  <SelectValue
+                    placeholder={
+                      categoriesQuery.isLoading
+                        ? "Loading..."
+                        : "Select category"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoriesQuery.data?.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field
+          label="Download Link"
+          id="downloadLink"
+          error={errors.downloadLink?.message}
+        >
+          <Input
+            id="downloadLink"
+            placeholder="https://..."
+            autoComplete="off"
+            {...register("downloadLink")}
+          />
+        </Field>
+
+        <Field
+          label="Fix Link"
+          id="fixLink"
+          error={errors.fixLink?.message}
+        >
+          <Input
+            id="fixLink"
+            placeholder="https://..."
+            autoComplete="off"
+            {...register("fixLink")}
+          />
+        </Field>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field
+          label="Tutorial Channel ID"
+          id="tutorialChannelId"
+          error={errors.tutorialChannelId?.message}
+        >
+          <Input
+            id="tutorialChannelId"
+            placeholder="@your_channel"
+            autoComplete="off"
+            {...register("tutorialChannelId")}
+          />
+        </Field>
+
+        <Field
+          label="Tutorial Message ID"
+          id="tutorialMessageId"
+          error={errors.tutorialMessageId?.message}
+        >
+          <Input
+            id="tutorialMessageId"
+            type="number"
+            inputMode="numeric"
+            placeholder="123"
+            autoComplete="off"
+            {...register("tutorialMessageId", { valueAsNumber: true })}
+          />
+        </Field>
+
+        <Field
+          label="Display Order"
+          id="displayOrder"
+          error={errors.displayOrder?.message}
+        >
+          <Input
+            id="displayOrder"
+            type="number"
+            inputMode="numeric"
+            placeholder="0"
+            autoComplete="off"
+            {...register("displayOrder", { valueAsNumber: true })}
+          />
+        </Field>
+      </div>
+
+      <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2">
+        <div className="space-y-0.5">
+          <Label htmlFor="isVisible" className="text-sm">
+            Visible
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Hidden resources are not shown to Telegram users.
+          </p>
+        </div>
+        <Controller
+          control={control}
+          name="isVisible"
+          render={({ field }) => (
+            <Switch
+              id="isVisible"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          )}
+        />
+      </div>
+
+      <SubmitActions
+        isSubmitting={isSubmitting}
+        submitLabel={submitLabel}
+        onCancel={onCancel}
+      />
+    </form>
+  );
+}
+
+function mapResourceToForm(resource: Resource): ResourceFormValues {
+  return {
+    name: resource.name,
+    slug: resource.slug,
+    description: resource.description ?? "",
+    version: resource.version ?? "",
+    platformId: resource.platformId,
+    categoryId: resource.categoryId,
+    downloadLink: resource.downloadLink,
+    fixLink: resource.fixLink,
+    tutorialChannelId: resource.tutorialChannelId,
+    tutorialMessageId: resource.tutorialMessageId,
+    displayOrder: resource.displayOrder,
+    isVisible: resource.isVisible,
+  };
+}

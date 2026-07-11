@@ -110,6 +110,8 @@ async function getResource(id) {
 async function createResource(payload) {
     const name = String(payload.name || "").trim();
     const slug = String(payload.slug || toSlug(name)).trim();
+    const description = String(payload.description || "").trim();
+    const version = String(payload.version || "").trim();
     const downloadLink = String(payload.downloadLink || "").trim();
     const fixLink = String(payload.fixLink || "").trim();
     const tutorialChannelId = String(payload.tutorialChannelId || "").trim();
@@ -132,6 +134,8 @@ async function createResource(payload) {
         data: {
             name,
             slug,
+            description,
+            version,
             platformId,
             categoryId,
             downloadLink,
@@ -140,7 +144,7 @@ async function createResource(payload) {
             tutorialMessageId,
             displayOrder,
             isVisible,
-        },
+},
         include: { platform: true, category: true },
     });
 }
@@ -153,8 +157,16 @@ async function updateResource(id, payload) {
     }
 
     if (payload.slug !== undefined) {
-        data.slug = String(payload.slug).trim() || toSlug(payload.name || "");
+    data.slug = String(payload.slug).trim();
     }
+
+    if (payload.description !== undefined) {
+    data.description = String(payload.description).trim();
+}
+    
+if (payload.version !== undefined) {
+    data.version = String(payload.version).trim();
+}
 
     if (payload.platformId !== undefined) {
         data.platformId = Number(payload.platformId);

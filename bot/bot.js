@@ -1,3 +1,4 @@
+require("dotenv").config();
 const TelegramBot = require("node-telegram-bot-api");
 const registerStartCommand = require("./commands/start");
 const handleCallbackQuery = require("./handlers/callbackHandler");

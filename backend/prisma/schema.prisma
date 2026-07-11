@@ -8,40 +8,52 @@ datasource db {
 }
 
 model Platform {
-  id        Int        @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   name      String
-  slug      String     @unique
-  createdAt DateTime   @default(now())
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
   resources Resource[]
 }
 
 model Category {
-  id           Int        @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   name         String
-  slug         String     @unique
-  displayOrder Int        @default(0)
-  createdAt    DateTime   @default(now())
-  resources    Resource[]
+  slug         String   @unique
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  resources Resource[]
 }
 
 model Resource {
-  id                Int       @id @default(autoincrement())
-  name              String
-  slug              String    @unique
-  platformId        Int
-  categoryId        Int
-  downloadLink      String
-  fixLink           String
+  id Int @id @default(autoincrement())
+
+  name String
+  slug String
+
+  description String?
+  version     String?
+
+  platformId Int
+  categoryId Int
+
+  downloadLink String
+  fixLink      String
+
   tutorialChannelId String
   tutorialMessageId Int
-  displayOrder      Int       @default(0)
-  isVisible         Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
 
-  platform          Platform  @relation(fields: [platformId], references: [id], onDelete: Restrict)
-  category          Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  displayOrder Int     @default(0)
+  isVisible    Boolean @default(true)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  platform Platform @relation(fields: [platformId], references: [id], onDelete: Restrict)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([platformId, slug])
   @@index([platformId])
   @@index([categoryId])
   @@index([displayOrder])

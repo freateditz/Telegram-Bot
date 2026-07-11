@@ -1,6 +1,7 @@
 const prisma = require("./prisma");
 const seedData = require("./seedData");
 const { loadLegacyVerifiedUsers } = require("./legacyUsers");
+const { migrateLegacySettings } = require("./settingsMigration");
 
 async function seedPlatforms() {
   for (const platform of seedData.platforms) {
@@ -37,7 +38,12 @@ async function seedResources() {
     const { platformSlug, categorySlug, ...resourceData } = resource;
 
     await prisma.resource.upsert({
-      where: { slug: resource.slug },
+      where: {
+  platformId_slug: {
+    platformId: platform.id,
+    slug: resourceData.slug,
+  },
+},
       create: {
         ...resourceData,
         platformId: platform.id,
@@ -79,6 +85,12 @@ async function seedLegacyUsers() {
 }
 
 async function seedDatabase() {
+  // Migrate any legacy dashboard-saved keys (youtube/telegram/support)
+  // into the canonical keys (youtubeLink/channelLink/supportLink) the
+  // bot actually reads. Runs before the seeder so the seed doesn't
+  // have to think about legacy state.
+  await migrateLegacySettings();
+
   await seedPlatforms();
   await seedCategories();
   await seedResources();
