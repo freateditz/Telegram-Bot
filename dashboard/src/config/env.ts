@@ -8,8 +8,18 @@
  *   - Local (Vite proxy):   "/api"
  *   - Production (absolute): "https://<backend-host>/api"
  *
- * Use this everywhere instead of `import.meta.env` so missing keys
- * fail loud during development rather than silently at runtime.
+ * Vite automatically loads:
+ *   - `.env`             — every mode
+ *   - `.env.development` — `vite dev`
+ *   - `.env.production`  — `vite build`
+ *
+ * We resolve the URL in this priority:
+ *   1. Vercel-injected `VITE_API_BASE_URL` (set in the project's
+ *      Environment Variables panel) — wins over files when set.
+ *   2. File-loaded value (`.env.production` for prod, `.env` for dev).
+ *
+ * Use this module everywhere instead of `import.meta.env` so missing
+ * keys fail loud during development rather than silently at runtime.
  */
 
 interface AppEnv {
@@ -20,8 +30,9 @@ interface AppEnv {
 function normalizeBaseUrl(raw: string | undefined): string {
   if (!raw) {
     throw new Error(
-      "VITE_API_BASE_URL is not defined. Check the dashboard .env file " +
-        "or your Vercel project environment variables."
+      "VITE_API_BASE_URL is not defined. Set it in dashboard/.env, " +
+        "dashboard/.env.production, or the Vercel project environment " +
+        "variables."
     );
   }
   // Strip any trailing slashes so `${apiBaseUrl}/resources` always
@@ -35,8 +46,9 @@ function readEnv(): AppEnv {
 
   if (!appName) {
     throw new Error(
-      "VITE_APP_NAME is not defined. Check the dashboard .env file " +
-        "or your Vercel project environment variables."
+      "VITE_APP_NAME is not defined. Set it in dashboard/.env, " +
+        "dashboard/.env.production, or the Vercel project environment " +
+        "variables."
     );
   }
 

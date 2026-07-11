@@ -4,15 +4,27 @@ import { env } from "@/config/env";
 /**
  * Single shared Axios instance for the dashboard.
  *
- * - Base URL is set from VITE_API_BASE_URL.
- *   - Local: "/api" (Vite dev proxy forwards to the backend on :3000)
- *   - Prod:  "https://<railway>/api" (absolute, includes /api suffix)
- * - Service-level paths in `apiRoutes.ts` are relative to the `/api`
- *   prefix (e.g. "/resources") so they compose correctly in both
- *   environments.
- * - JSON content type is set up front so services don't repeat it.
- * - Response interceptor normalizes errors to plain `Error` objects so
- *   React Query / components can render `error.message` directly.
+ * Source of truth for the API base URL is `env.apiBaseUrl`, which is
+ * derived from `import.meta.env.VITE_API_BASE_URL`. Vite injects
+ * that variable from one of (in priority order):
+ *
+ *   1. Vercel project env vars (Production / Preview)  — runtime override
+ *   2. dashboard/.env.production                      — production build
+ *   3. dashboard/.env                                 — local dev (vite dev)
+ *
+ * The value must always end with `/api`. Service-level paths in
+ * `apiRoutes.ts` are relative to that prefix (e.g. "/resources"), so
+ * the same code composes correctly in every environment:
+ *
+ *   - Local:  baseURL="/api"  + "/resources"  -> /api/resources
+ *             (Vite dev proxy forwards to backend on :3000)
+ *   - Prod:   baseURL="https://<railway>/api" + "/resources"
+ *             -> https://<railway>/api/resources
+ *
+ * JSON content type is set up front so services don't repeat it.
+ * The response interceptor normalizes errors to plain `Error`
+ * objects so React Query / components can render `error.message`
+ * directly.
  */
 export const api: AxiosInstance = axios.create({
   baseURL: env.apiBaseUrl,
