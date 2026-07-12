@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import { usePlatforms } from "@/hooks/usePlatforms";
 import { useCategories } from "@/hooks/useCategories";
@@ -36,14 +35,14 @@ interface ResourceFormProps {
 const EMPTY_DEFAULTS: ResourceFormValues = {
   name: "",
   slug: "",
-  description: "",
-  version: "",
+  description: null,
+  version: null,
   platformId: 0,
   categoryId: 0,
-  downloadLink: "",
-  fixLink: "",
-  tutorialChannelId: "",
-  tutorialMessageId: 0,
+  downloadLink: null,
+  fixLink: null,
+  tutorialChannelId: null,
+  tutorialMessageId: null,
   displayOrder: 0,
   isVisible: true,
 };
@@ -105,9 +104,7 @@ export function ResourceForm({
       data.tutorialChannelId = null;
       data.tutorialMessageId = null;
     }
-    // ResourceInput expects string | null, ResourceFormValues is string | null.
-    // The cast is safe now.
-    onSubmit(data as unknown as ResourceFormValues);
+    onSubmit(data);
   };
 
   const isLoadingOptions =
@@ -147,25 +144,25 @@ export function ResourceForm({
 
       <div className="space-y-3 rounded-md border border-border bg-muted/20 p-4">
         <h3 className="text-sm font-medium">Delivery Options</h3>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-3">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox
+            <Switch
               checked={showDirectDownload}
-              onCheckedChange={(checked) => setShowDirectDownload(!!checked)}
+              onCheckedChange={(checked: boolean) => setShowDirectDownload(checked)}
             />
             Direct Download
           </label>
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox
+            <Switch
               checked={showFixLink}
-              onCheckedChange={(checked) => setShowFixLink(!!checked)}
+              onCheckedChange={(checked: boolean) => setShowFixLink(checked)}
             />
             Fix Link
           </label>
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox
+            <Switch
               checked={showTelegramTutorial}
-              onCheckedChange={(checked) => setShowTelegramTutorial(!!checked)}
+              onCheckedChange={(checked: boolean) => setShowTelegramTutorial(checked)}
             />
             Telegram Tutorial
           </label>
@@ -382,14 +379,14 @@ function mapResourceToForm(resource: Resource): ResourceFormValues {
   return {
     name: resource.name,
     slug: resource.slug,
-    description: resource.description ?? "",
-    version: resource.version ?? "",
+    description: resource.description,
+    version: resource.version,
     platformId: resource.platformId,
     categoryId: resource.categoryId,
-    downloadLink: resource.downloadLink ?? "",
-    fixLink: resource.fixLink ?? "",
-    tutorialChannelId: resource.tutorialChannelId ?? "",
-    tutorialMessageId: resource.tutorialMessageId ?? 0,
+    downloadLink: resource.downloadLink,
+    fixLink: resource.fixLink,
+    tutorialChannelId: resource.tutorialChannelId,
+    tutorialMessageId: resource.tutorialMessageId,
     displayOrder: resource.displayOrder,
     isVisible: resource.isVisible,
   };
