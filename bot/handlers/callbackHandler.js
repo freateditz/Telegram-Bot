@@ -42,6 +42,11 @@ module.exports = async function handleCallback(bot, query) {
         await bot.answerCallbackQuery(query.id);
         return telegramService.sendResourceDetails(bot, chatId, firstArg, secondArg, backendClient);
 
+    case callbackTypes.tutorial:
+        await bot.answerCallbackQuery(query.id);
+        // format: tutorial:channelId:messageId -> firstArg is channelId, secondArg is messageId
+        return telegramService.sendTutorial(bot, chatId, firstArg, secondArg);
+
     case callbackTypes.back:
         await bot.answerCallbackQuery(query.id);
 

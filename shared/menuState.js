@@ -5,6 +5,7 @@ module.exports = {
         platform: "platform",
         category: "category",
         resource: "resource",
+        tutorial: "tutorial",
         back: "back",
     },
     labels: {

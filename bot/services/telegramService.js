@@ -50,7 +50,15 @@ async function showResourceMenu(bot, chatId, platformSlug, categorySlug, backend
 async function sendResourceDetails(bot, chatId, platformSlug, resourceSlug, backendClient) {
     const resource = await backendClient.getResource(platformSlug, resourceSlug);
 
-    if (!resource || !resource.downloadLink || !resource.fixLink || !resource.tutorialChannelId || !resource.tutorialMessageId) {
+    if (!resource) {
+        return bot.sendMessage(chatId, "Resource not found.");
+    }
+
+    const hasDownload = !!resource.downloadLink;
+    const hasFix = !!resource.fixLink;
+    const hasTutorial = !!(resource.tutorialChannelId && resource.tutorialMessageId);
+
+    if (!hasDownload && !hasFix && !hasTutorial) {
         return bot.sendMessage(
             chatId,
             "This resource is not configured yet.",
@@ -60,19 +68,46 @@ async function sendResourceDetails(bot, chatId, platformSlug, resourceSlug, back
         );
     }
 
+    let messageText = `🔥 *${resource.name}*`;
+    if (resource.description) messageText += `\n\n${resource.description}`;
+
+    const keyboard = [];
+    if (hasDownload) {
+        keyboard.push([{ text: "⬇ Download Link", url: resource.downloadLink }]);
+    }
+    if (hasFix) {
+        keyboard.push([{ text: "🛠 Fix Link", url: resource.fixLink }]);
+    }
+    if (hasTutorial) {
+        // Pass channelId and messageId directly in callback_data, separated by commas or special char if possible
+        // If it exceeds 64 bytes, this will fail. Let's hope it fits.
+        // Format: tutorial:channelId:messageId
+        keyboard.push([{ text: "🎓 View Tutorial", callback_data: `tutorial:${resource.tutorialChannelId}:${resource.tutorialMessageId}` }]);
+    }
+    
+    // Add navigation buttons
+    keyboard.push([
+        { text: "⬅ Back", callback_data: `back:category:${platformSlug}:${resource.category.slug}` },
+        { text: "🏠 Home", callback_data: "home" },
+    ]);
+
     await bot.sendMessage(
         chatId,
-        `🔥 *${resource.name}*\n\n⬇ *Download Link*\n${resource.downloadLink}\n\n🛠 *Fix File*\n${resource.fixLink}`,
+        messageText,
         {
             parse_mode: "Markdown",
-            reply_markup: dynamicKeyboard.buildResourceDetailsKeyboard(platformSlug, resource.category.slug),
+            reply_markup: { inline_keyboard: keyboard },
         }
     );
 
+    return;
+}
+
+async function sendTutorial(bot, chatId, channelId, messageId) {
     return bot.copyMessage(
         chatId,
-        resource.tutorialChannelId,
-        resource.tutorialMessageId
+        channelId,
+        messageId
     );
 }
 
@@ -82,4 +117,5 @@ module.exports = {
     showCategoryMenu,
     showResourceMenu,
     sendResourceDetails,
+    sendTutorial,
 };
