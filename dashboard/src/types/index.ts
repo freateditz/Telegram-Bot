@@ -26,10 +26,10 @@ export interface Resource {
   version: string | null;
   platformId: number;
   categoryId: number;
-  downloadLink: string;
-  fixLink: string;
-  tutorialChannelId: string;
-  tutorialMessageId: number;
+  downloadLink: string | null;
+  fixLink: string | null;
+  tutorialChannelId: string | null;
+  tutorialMessageId: number | null;
   displayOrder: number;
   isVisible: boolean;
   createdAt: string;
