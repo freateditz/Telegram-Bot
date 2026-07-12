@@ -110,17 +110,20 @@ async function getResource(id) {
 async function createResource(payload) {
     const name = String(payload.name || "").trim();
     const slug = String(payload.slug || toSlug(name)).trim();
-    const description = String(payload.description || "").trim();
-    const version = String(payload.version || "").trim();
-    const downloadLink = String(payload.downloadLink || "").trim();
-    const fixLink = String(payload.fixLink || "").trim();
-    const tutorialChannelId = String(payload.tutorialChannelId || "").trim();
-    const tutorialMessageId = toInt(payload.tutorialMessageId, NaN);
+    const description = String(payload.description || "").trim() || null;
+    const version = String(payload.version || "").trim() || null;
+
+    // Explicitly handle nulls for optional fields
+    const downloadLink = String(payload.downloadLink || "").trim() || null;
+    const fixLink = String(payload.fixLink || "").trim() || null;
+    const tutorialChannelId = String(payload.tutorialChannelId || "").trim() || null;
+    const tutorialMessageId = payload.tutorialMessageId ? toInt(payload.tutorialMessageId, null) : null;
+
     const displayOrder = toInt(payload.displayOrder, 0);
     const isVisible = toBoolean(payload.isVisible, true);
 
-    if (!name || !slug || !downloadLink || !fixLink || !tutorialChannelId || Number.isNaN(tutorialMessageId)) {
-        throw new HttpError(400, "name, slug, downloadLink, fixLink, tutorialChannelId, and tutorialMessageId are required");
+    if (!name || !slug) {
+        throw new HttpError(400, "name and slug are required");
     }
 
     const platformId = Number(payload.platformId);
@@ -144,7 +147,7 @@ async function createResource(payload) {
             tutorialMessageId,
             displayOrder,
             isVisible,
-},
+        },
         include: { platform: true, category: true },
     });
 }
@@ -157,16 +160,17 @@ async function updateResource(id, payload) {
     }
 
     if (payload.slug !== undefined) {
-    data.slug = String(payload.slug).trim();
+        data.slug = String(payload.slug).trim();
     }
 
+    // Handle optional fields with potential null updates
     if (payload.description !== undefined) {
-    data.description = String(payload.description).trim();
-}
-    
-if (payload.version !== undefined) {
-    data.version = String(payload.version).trim();
-}
+        data.description = String(payload.description || "").trim() || null;
+    }
+
+    if (payload.version !== undefined) {
+        data.version = String(payload.version || "").trim() || null;
+    }
 
     if (payload.platformId !== undefined) {
         data.platformId = Number(payload.platformId);
@@ -177,19 +181,19 @@ if (payload.version !== undefined) {
     }
 
     if (payload.downloadLink !== undefined) {
-        data.downloadLink = String(payload.downloadLink).trim();
+        data.downloadLink = String(payload.downloadLink || "").trim() || null;
     }
 
     if (payload.fixLink !== undefined) {
-        data.fixLink = String(payload.fixLink).trim();
+        data.fixLink = String(payload.fixLink || "").trim() || null;
     }
 
     if (payload.tutorialChannelId !== undefined) {
-        data.tutorialChannelId = String(payload.tutorialChannelId).trim();
+        data.tutorialChannelId = String(payload.tutorialChannelId || "").trim() || null;
     }
 
     if (payload.tutorialMessageId !== undefined) {
-        data.tutorialMessageId = toInt(payload.tutorialMessageId, NaN);
+        data.tutorialMessageId = payload.tutorialMessageId ? toInt(payload.tutorialMessageId, null) : null;
     }
 
     if (payload.displayOrder !== undefined) {

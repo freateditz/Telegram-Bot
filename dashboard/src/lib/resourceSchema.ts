@@ -34,20 +34,21 @@ export const resourceFormSchema = z.object({
   downloadLink: z
     .string()
     .trim()
-    .min(1, "Download link is required")
-    .url("Must be a valid URL"),
+    .optional()
+    .or(z.literal(""))
+    .refine((val) => !val || z.string().url().safeParse(val).success, {
+      message: "Must be a valid URL",
+    }),
   fixLink: z
     .string()
     .trim()
-    .min(1, "Fix link is required")
-    .url("Must be a valid URL"),
-  tutorialChannelId: z
-    .string()
-    .trim()
-    .min(1, "Tutorial channel ID is required"),
-  tutorialMessageId: z
-    .number({ message: "Tutorial message ID is required" })
-    .int("Must be a whole number"),
+    .optional()
+    .or(z.literal(""))
+    .refine((val) => !val || z.string().url().safeParse(val).success, {
+      message: "Must be a valid URL",
+    }),
+  tutorialChannelId: z.string().trim().optional().or(z.literal("")),
+  tutorialMessageId: z.number().int().optional().or(z.literal(0)),
   displayOrder: z.number().int(),
   isVisible: z.boolean(),
 });

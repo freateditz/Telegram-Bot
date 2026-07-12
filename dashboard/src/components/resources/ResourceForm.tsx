@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { usePlatforms } from "@/hooks/usePlatforms";
 import { useCategories } from "@/hooks/useCategories";
@@ -57,6 +58,20 @@ export function ResourceForm({
   const categoriesQuery = useCategories();
   const [slugTouched, setSlugTouched] = useState(Boolean(defaultValues?.slug));
 
+  const [showDirectDownload, setShowDirectDownload] = useState(true);
+  const [showFixLink, setShowFixLink] = useState(false);
+  const [showTelegramTutorial, setShowTelegramTutorial] = useState(false);
+
+  useEffect(() => {
+    if (defaultValues) {
+      setShowDirectDownload(Boolean(defaultValues.downloadLink));
+      setShowFixLink(Boolean(defaultValues.fixLink));
+      setShowTelegramTutorial(
+        Boolean(defaultValues.tutorialChannelId || defaultValues.tutorialMessageId)
+      );
+    }
+  }, [defaultValues]);
+
   const form = useForm<ResourceFormValues>({
     resolver: zodResolver(resourceFormSchema),
     defaultValues: defaultValues
@@ -82,12 +97,23 @@ export function ResourceForm({
     }
   }, [name, slugTouched, setValue]);
 
+  const onSubmitWrapper = (values: ResourceFormValues) => {
+    const data = { ...values };
+    if (!showDirectDownload) data.downloadLink = null as any;
+    if (!showFixLink) data.fixLink = null as any;
+    if (!showTelegramTutorial) {
+      data.tutorialChannelId = null as any;
+      data.tutorialMessageId = null as any;
+    }
+    onSubmit(data);
+  };
+
   const isLoadingOptions =
     platformsQuery.isLoading || categoriesQuery.isLoading;
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmitWrapper)}
       className="grid gap-4"
       noValidate
     >
@@ -115,6 +141,33 @@ export function ResourceForm({
             })}
           />
         </Field>
+      </div>
+
+      <div className="space-y-3 rounded-md border border-border bg-muted/20 p-4">
+        <h3 className="text-sm font-medium">Delivery Options</h3>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={showDirectDownload}
+              onCheckedChange={(checked) => setShowDirectDownload(!!checked)}
+            />
+            Direct Download
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={showFixLink}
+              onCheckedChange={(checked) => setShowFixLink(!!checked)}
+            />
+            Fix Link
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={showTelegramTutorial}
+              onCheckedChange={(checked) => setShowTelegramTutorial(!!checked)}
+            />
+            Telegram Tutorial
+          </label>
+        </div>
       </div>
 
       <Field
@@ -211,7 +264,7 @@ export function ResourceForm({
         </Field>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      {showDirectDownload && (
         <Field
           label="Download Link"
           id="downloadLink"
@@ -224,7 +277,9 @@ export function ResourceForm({
             {...register("downloadLink")}
           />
         </Field>
+      )}
 
+      {showFixLink && (
         <Field
           label="Fix Link"
           id="fixLink"
@@ -237,37 +292,41 @@ export function ResourceForm({
             {...register("fixLink")}
           />
         </Field>
-      </div>
+      )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Field
-          label="Tutorial Channel ID"
-          id="tutorialChannelId"
-          error={errors.tutorialChannelId?.message}
-        >
-          <Input
+      {showTelegramTutorial && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Tutorial Channel ID"
             id="tutorialChannelId"
-            placeholder="@your_channel"
-            autoComplete="off"
-            {...register("tutorialChannelId")}
-          />
-        </Field>
+            error={errors.tutorialChannelId?.message}
+          >
+            <Input
+              id="tutorialChannelId"
+              placeholder="@your_channel"
+              autoComplete="off"
+              {...register("tutorialChannelId")}
+            />
+          </Field>
 
-        <Field
-          label="Tutorial Message ID"
-          id="tutorialMessageId"
-          error={errors.tutorialMessageId?.message}
-        >
-          <Input
+          <Field
+            label="Tutorial Message ID"
             id="tutorialMessageId"
-            type="number"
-            inputMode="numeric"
-            placeholder="123"
-            autoComplete="off"
-            {...register("tutorialMessageId", { valueAsNumber: true })}
-          />
-        </Field>
+            error={errors.tutorialMessageId?.message}
+          >
+            <Input
+              id="tutorialMessageId"
+              type="number"
+              inputMode="numeric"
+              placeholder="123"
+              autoComplete="off"
+              {...register("tutorialMessageId", { valueAsNumber: true })}
+            />
+          </Field>
+        </div>
+      )}
 
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field
           label="Display Order"
           id="displayOrder"
@@ -282,28 +341,30 @@ export function ResourceForm({
             {...register("displayOrder", { valueAsNumber: true })}
           />
         </Field>
-      </div>
 
-      <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2">
-        <div className="space-y-0.5">
-          <Label htmlFor="isVisible" className="text-sm">
-            Visible
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Hidden resources are not shown to Telegram users.
-          </p>
-        </div>
-        <Controller
-          control={control}
-          name="isVisible"
-          render={({ field }) => (
-            <Switch
-              id="isVisible"
-              checked={field.value}
-              onCheckedChange={field.onChange}
+        <div className="flex items-end pb-1">
+          <div className="flex w-full items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2">
+            <div className="space-y-0.5">
+              <Label htmlFor="isVisible" className="text-sm">
+                Visible
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Hidden resources are not shown to Telegram users.
+              </p>
+            </div>
+            <Controller
+              control={control}
+              name="isVisible"
+              render={({ field }) => (
+                <Switch
+                  id="isVisible"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
             />
-          )}
-        />
+          </div>
+        </div>
       </div>
 
       <SubmitActions
