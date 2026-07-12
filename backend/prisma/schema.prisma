@@ -38,11 +38,11 @@ model Resource {
   platformId Int
   categoryId Int
 
-  downloadLink String
-  fixLink      String
+  downloadLink String?
+  fixLink      String?
 
-  tutorialChannelId String
-  tutorialMessageId Int
+  tutorialChannelId String?
+  tutorialMessageId Int?
 
   displayOrder Int     @default(0)
   isVisible    Boolean @default(true)
