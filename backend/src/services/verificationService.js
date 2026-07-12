@@ -52,6 +52,13 @@ async function isChannelMember(telegramId) {
         throw new HttpError(500, "Telegram verification configuration is missing");
     }
 
+    // Extract chat_id: if it's a URL (https://t.me/username), extract username (@username).
+    // If it's already a username (@username) or ID (-100...), use it as is.
+    let chatId = env.telegramChannel;
+    if (chatId.startsWith("https://t.me/")) {
+        chatId = "@" + chatId.split("https://t.me/")[1];
+    }
+
     try {
         const response = await fetch(`https://api.telegram.org/bot${env.botToken}/getChatMember`, {
             method: "POST",
@@ -59,7 +66,7 @@ async function isChannelMember(telegramId) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                chat_id: env.telegramChannel,
+                chat_id: chatId,
                 user_id: Number(telegramId),
             }),
         });
@@ -72,7 +79,6 @@ async function isChannelMember(telegramId) {
 
         return ["member", "administrator", "creator"].includes(payload.result.status);
     } catch (error) {
-        console.log("Verification Error:", error.message);
         return false;
     }
 }
