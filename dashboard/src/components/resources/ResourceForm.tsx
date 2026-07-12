@@ -99,13 +99,15 @@ export function ResourceForm({
 
   const onSubmitWrapper = (values: ResourceFormValues) => {
     const data = { ...values };
-    if (!showDirectDownload) data.downloadLink = null as any;
-    if (!showFixLink) data.fixLink = null as any;
+    if (!showDirectDownload) data.downloadLink = null;
+    if (!showFixLink) data.fixLink = null;
     if (!showTelegramTutorial) {
-      data.tutorialChannelId = null as any;
-      data.tutorialMessageId = null as any;
+      data.tutorialChannelId = null;
+      data.tutorialMessageId = null;
     }
-    onSubmit(data);
+    // ResourceInput expects string | null, ResourceFormValues is string | null.
+    // The cast is safe now.
+    onSubmit(data as unknown as ResourceFormValues);
   };
 
   const isLoadingOptions =

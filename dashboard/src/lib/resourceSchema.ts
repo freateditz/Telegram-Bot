@@ -1,16 +1,18 @@
 import { z } from "zod";
 
-/**
- * Client-side validation for the resource form.
- * The backend will re-validate; this is for UX.
- *
- * Numeric fields use plain z.number() (not z.coerce) so the Zod input
- * and output types match. The form inputs use `valueAsNumber: true`
- * so HTML <input type="number"> values arrive already coerced.
- *
- * No `.default()` here: defaults are provided by the form's
- * `defaultValues` to keep the input type identical to the output type.
- */
+const optionalString = z
+  .union([z.string(), z.null(), z.literal("")])
+  .transform((val) => (val === "" ? null : val));
+
+const optionalUrl = optionalString.refine(
+  (val) => !val || z.string().url().safeParse(val).success,
+  { message: "Must be a valid URL" }
+);
+
+const optionalNumber = z
+  .union([z.number(), z.null(), z.literal(0)])
+  .transform((val) => (val === 0 ? null : val));
+
 export const resourceFormSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   slug: z
@@ -21,8 +23,8 @@ export const resourceFormSchema = z.object({
       /^[a-z0-9-]+$/,
       "Slug must be lowercase letters, numbers, and dashes"
     ),
-  description: z.string().trim().optional().or(z.literal("")),
-  version: z.string().trim().optional().or(z.literal("")),
+  description: optionalString,
+  version: optionalString,
   platformId: z
     .number({ message: "Platform is required" })
     .int()
@@ -31,24 +33,10 @@ export const resourceFormSchema = z.object({
     .number({ message: "Category is required" })
     .int()
     .positive("Category is required"),
-  downloadLink: z
-    .string()
-    .trim()
-    .optional()
-    .or(z.literal(""))
-    .refine((val) => !val || z.string().url().safeParse(val).success, {
-      message: "Must be a valid URL",
-    }),
-  fixLink: z
-    .string()
-    .trim()
-    .optional()
-    .or(z.literal(""))
-    .refine((val) => !val || z.string().url().safeParse(val).success, {
-      message: "Must be a valid URL",
-    }),
-  tutorialChannelId: z.string().trim().optional().or(z.literal("")),
-  tutorialMessageId: z.number().int().optional().or(z.literal(0)),
+  downloadLink: optionalUrl,
+  fixLink: optionalUrl,
+  tutorialChannelId: optionalString,
+  tutorialMessageId: optionalNumber,
   displayOrder: z.number().int(),
   isVisible: z.boolean(),
 });

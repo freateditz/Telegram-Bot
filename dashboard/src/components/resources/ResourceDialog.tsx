@@ -33,11 +33,7 @@ export function ResourceDialog({
   });
 
   const handleSubmit = async (values: ResourceFormValues) => {
-    const payload = {
-      ...values,
-      description: values.description ?? "",
-      version: values.version ?? "",
-    };
+    const payload = { ...values };
     if (isEdit && resource) {
       await update.mutateAsync({ id: resource.id, input: payload });
     } else {
