@@ -1,7 +1,23 @@
 const commonKeyboard = require("../keyboards/commonKeyboard");
 const dynamicKeyboard = require("../keyboards/dynamicKeyboard");
 
-async function showHome(bot, chatId, backendClient) {
+// Helper to disable previous inline keyboards
+async function disablePreviousKeyboard(bot, query) {
+    if (query.message && query.message.reply_markup && query.message.reply_markup.inline_keyboard) {
+        try {
+            await bot.editMessageReplyMarkup({ inline_keyboard: [] }, {
+                chat_id: query.message.chat.id,
+                message_id: query.message.message_id
+            });
+        } catch (error) {
+            // Ignore errors if message is already deleted or keyboard is already empty
+        }
+    }
+}
+
+async function showHome(bot, chatId, backendClient, query = null) {
+    if (query) await disablePreviousKeyboard(bot, query);
+    
     const platforms = await backendClient.listPlatforms();
 
     if (platforms.length === 0) {
@@ -13,10 +29,15 @@ async function showHome(bot, chatId, backendClient) {
     });
 }
 
-async function showCategoryMenu(bot, chatId, platformSlug, backendClient) {
+async function showCategoryMenu(bot, chatId, platformSlug, backendClient, query) {
+    await disablePreviousKeyboard(bot, query);
+    
+    const platformName = platformSlug.charAt(0).toUpperCase() + platformSlug.slice(1);
+    await bot.sendMessage(chatId, `🖥 *Selected OS*\n${platformName}\n\n------------------`, { parse_mode: 'Markdown' });
+
     const categories = await backendClient.listCategories();
 
-    return bot.sendMessage(chatId, "Choose Category", {
+    return bot.sendMessage(chatId, "📂 Choose Category", {
         reply_markup: dynamicKeyboard.buildCategoryKeyboard(platformSlug, categories),
     });
 }
@@ -35,24 +56,33 @@ async function sendVerificationPrompt(bot, chatId, prompt) {
     );
 }
 
-async function showResourceMenu(bot, chatId, platformSlug, categorySlug, backendClient) {
+async function showResourceMenu(bot, chatId, platformSlug, categorySlug, backendClient, query) {
+    await disablePreviousKeyboard(bot, query);
+
+    const categoryName = categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1);
+    await bot.sendMessage(chatId, `📂 *Selected Category*\n${categoryName}\n\n------------------`, { parse_mode: 'Markdown' });
+
     const items = await backendClient.listMenuResources(platformSlug, categorySlug);
 
     return bot.sendMessage(
         chatId,
-        items.length ? "Choose Resource" : "No resources are configured for this category yet.",
+        items.length ? "📦 Choose Resource" : "No resources are configured for this category yet.",
         {
             reply_markup: dynamicKeyboard.buildResourceKeyboard(platformSlug, categorySlug, items),
         }
     );
 }
 
-async function sendResourceDetails(bot, chatId, platformSlug, resourceSlug, backendClient) {
+async function sendResourceDetails(bot, chatId, platformSlug, resourceSlug, backendClient, query) {
+    await disablePreviousKeyboard(bot, query);
+
     const resource = await backendClient.getResource(platformSlug, resourceSlug);
 
     if (!resource) {
         return bot.sendMessage(chatId, "Resource not found.");
     }
+
+    await bot.sendMessage(chatId, `📦 *Selected Resource*\n${resource.name}\n\n------------------`, { parse_mode: 'Markdown' });
 
     const hasDownload = !!resource.downloadLink;
     const hasFix = !!resource.fixLink;
@@ -68,21 +98,18 @@ async function sendResourceDetails(bot, chatId, platformSlug, resourceSlug, back
         );
     }
 
-    let messageText = `🔥 *${resource.name}*`;
+    let messageText = `🔥 *${resource.name}*\n\nChoose what you'd like to access.`;
     if (resource.description) messageText += `\n\n${resource.description}`;
 
     const keyboard = [];
     if (hasDownload) {
-        keyboard.push([{ text: "⬇ Download Link", url: resource.downloadLink }]);
+        keyboard.push([{ text: "⬇ Download", url: resource.downloadLink }]);
     }
     if (hasFix) {
-        keyboard.push([{ text: "🛠 Fix Link", url: resource.fixLink }]);
+        keyboard.push([{ text: "🛠 Fix", url: resource.fixLink }]);
     }
     if (hasTutorial) {
-        // Pass channelId and messageId directly in callback_data, separated by commas or special char if possible
-        // If it exceeds 64 bytes, this will fail. Let's hope it fits.
-        // Format: tutorial:channelId:messageId
-        keyboard.push([{ text: "🎓 View Tutorial", callback_data: `tutorial:${resource.tutorialChannelId}:${resource.tutorialMessageId}` }]);
+        keyboard.push([{ text: "🎓 Tutorial", callback_data: `tutorial:${resource.tutorialChannelId}:${resource.tutorialMessageId}` }]);
     }
     
     // Add navigation buttons

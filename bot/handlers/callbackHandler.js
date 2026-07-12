@@ -28,19 +28,19 @@ module.exports = async function handleCallback(bot, query) {
 
     case callbackTypes.home:
         await bot.answerCallbackQuery(query.id);
-        return telegramService.showHome(bot, chatId, backendClient);
+        return telegramService.showHome(bot, chatId, backendClient, query);
 
     case callbackTypes.platform:
         await bot.answerCallbackQuery(query.id);
-        return telegramService.showCategoryMenu(bot, chatId, firstArg, backendClient);
+        return telegramService.showCategoryMenu(bot, chatId, firstArg, backendClient, query);
 
     case callbackTypes.category:
         await bot.answerCallbackQuery(query.id);
-        return telegramService.showResourceMenu(bot, chatId, firstArg, secondArg, backendClient);
+        return telegramService.showResourceMenu(bot, chatId, firstArg, secondArg, backendClient, query);
 
     case callbackTypes.resource:
         await bot.answerCallbackQuery(query.id);
-        return telegramService.sendResourceDetails(bot, chatId, firstArg, secondArg, backendClient);
+        return telegramService.sendResourceDetails(bot, chatId, firstArg, secondArg, backendClient, query);
 
     case callbackTypes.tutorial:
         await bot.answerCallbackQuery(query.id);
@@ -51,18 +51,18 @@ module.exports = async function handleCallback(bot, query) {
         await bot.answerCallbackQuery(query.id);
 
         if (firstArg === "home") {
-            return telegramService.showHome(bot, chatId, backendClient);
+            return telegramService.showHome(bot, chatId, backendClient, query);
         }
 
         if (firstArg === "platform") {
-            return telegramService.showCategoryMenu(bot, chatId, secondArg, backendClient);
+            return telegramService.showCategoryMenu(bot, chatId, secondArg, backendClient, query);
         }
 
         if (firstArg === "category") {
-            return telegramService.showResourceMenu(bot, chatId, secondArg, thirdArg, backendClient);
+            return telegramService.showResourceMenu(bot, chatId, secondArg, thirdArg, backendClient, query);
         }
 
-        return telegramService.showHome(bot, chatId, backendClient);
+        return telegramService.showHome(bot, chatId, backendClient, query);
 
     default:
         await bot.answerCallbackQuery(query.id);
