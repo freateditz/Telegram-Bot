@@ -18,7 +18,7 @@ module.exports = async function handleVerification(bot, query) {
     if (!joined) {
         return bot.sendMessage(
             chatId,
-            `❌ Verification Failed\n\nPlease join the required channels first, then click Verify again.`
+            `❌ Verification Failed\n\nPlease subscribe to our YouTube channel and join our Telegram channel first, then click the "Verify" button again.`
         );
     }
 
