@@ -35,9 +35,22 @@ const markVerified = asyncHandler(async (req, res) => {
     res.json({ ok: true, item });
 });
 
+const unverify = asyncHandler(async (req, res) => {
+    const { userId } = req.body || {};
+
+    if (!userId) {
+        return res.status(400).json({ ok: false, error: "userId is required" });
+    }
+
+    await verificationService.markUnverified(userId);
+
+    res.json({ ok: true });
+});
+
 module.exports = {
     getPrompt,
     getStatus,
     checkMember,
     markVerified,
+    unverify,
 };

@@ -60,6 +60,19 @@ async function markVerifiedByTelegramId(telegramId) {
   });
 }
 
+async function markUnverifiedByTelegramId(telegramId) {
+  const normalized = String(telegramId).trim();
+
+  if (!normalized) {
+    throw new HttpError(400, "telegramId is required");
+  }
+
+  return prisma.user.updateMany({
+    where: { telegramId: normalized },
+    data: { verified: false },
+  });
+}
+
 module.exports = {
   listUsers,
   getUser,
@@ -68,4 +81,5 @@ module.exports = {
   updateUser,
   deleteUser,
   markVerifiedByTelegramId,
+  markUnverifiedByTelegramId,
 };

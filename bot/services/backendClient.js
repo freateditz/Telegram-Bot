@@ -56,6 +56,13 @@ async function markVerified(userId) {
     });
 }
 
+async function markUnverified(userId) {
+    return request(apiRoutes.verification.unverify, {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+    });
+}
+
 async function listMenuResources(platform, category) {
     const payload = await request(apiRoutes.resources.menu(platform, category));
     return payload.items || [];
@@ -73,6 +80,7 @@ module.exports = {
     listCategories,
     checkChannelMember,
     markVerified,
+    markUnverified,
     listMenuResources,
     getResource,
 };

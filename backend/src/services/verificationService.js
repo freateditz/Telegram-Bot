@@ -47,6 +47,10 @@ async function markVerified(telegramId) {
     return userService.markVerifiedByTelegramId(telegramId);
 }
 
+async function markUnverified(telegramId) {
+    return userService.markUnverifiedByTelegramId(telegramId);
+}
+
 async function isChannelMember(telegramId) {
     if (!env.telegramChannel || !env.botToken) {
         throw new HttpError(500, "Telegram verification configuration is missing");
@@ -87,6 +91,7 @@ module.exports = {
     getVerificationPrompt,
     getVerificationStatus,
     markVerified,
+    markUnverified,
     isChannelMember,
     buildChannelLink,
 };
