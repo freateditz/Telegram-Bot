@@ -42,7 +42,7 @@ export function ProjectsPage() {
     setDeleteOpen(true);
   };
 
-  const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || "YOUR_BOT_USERNAME";
+  const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || "FreatEditzResources_Bot";
 
 // Inside ProjectsPage
 
