@@ -26,7 +26,6 @@ async function handleProjectDeepLink(bot, chatId, msg) {
         await backendClient.setPendingProject(telegramId, project.id);
 
         const prompt = await backendClient.getVerificationPrompt();
-...
 
         // Project verification screen
         const message = `📦 *${project.title}*\n\n${project.description ? `${project.description}\n\n` : ''}Before downloading complete the following:
