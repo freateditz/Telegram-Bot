@@ -14,7 +14,8 @@ export const projectFormSchema = z.object({
       "Slug must be lowercase letters, numbers, and dashes"
     ),
   description: z.string().trim().nullable(),
-  telegramFileId: z.string().trim().min(1, "Telegram File ID is required"),
+  telegramMessageLink: z.string().trim().url("Invalid URL").optional().nullable(),
+  telegramFileId: z.string().trim().optional().nullable(),
   thumbnail: z.string().trim().nullable(),
   isActive: z.boolean().optional(),
 });

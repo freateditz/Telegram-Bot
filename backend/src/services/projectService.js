@@ -17,13 +17,14 @@ async function getProjectBySlug(slug) {
 async function createProject(payload) {
   const title = String(payload.title || "").trim();
   const slug = String(payload.slug || toSlug(title)).trim();
-  const telegramFileId = String(payload.telegramFileId || "").trim();
+  const telegramMessageLink = payload.telegramMessageLink ? String(payload.telegramMessageLink).trim() : null;
+  const telegramFileId = payload.telegramFileId ? String(payload.telegramFileId).trim() : null;
   const description = payload.description ? String(payload.description).trim() : null;
   const thumbnail = payload.thumbnail ? String(payload.thumbnail).trim() : null;
   const isActive = payload.isActive !== undefined ? Boolean(payload.isActive) : true;
 
-  if (!title || !slug || !telegramFileId) {
-    throw new HttpError(400, "title, slug, and telegramFileId are required");
+  if (!title || !slug || (!telegramMessageLink && !telegramFileId)) {
+    throw new HttpError(400, "title, slug, and either telegramMessageLink or telegramFileId are required");
   }
 
   // Check unique slug
@@ -33,7 +34,7 @@ async function createProject(payload) {
   }
 
   return prisma.project.create({
-    data: { title, slug, description, telegramFileId, thumbnail, isActive },
+    data: { title, slug, description, telegramMessageLink, telegramFileId, thumbnail, isActive },
   });
 }
 
@@ -53,8 +54,12 @@ async function updateProject(id, payload) {
     }
   }
 
+  if (payload.telegramMessageLink !== undefined) {
+    data.telegramMessageLink = payload.telegramMessageLink ? String(payload.telegramMessageLink).trim() : null;
+  }
+
   if (payload.telegramFileId !== undefined) {
-    data.telegramFileId = String(payload.telegramFileId).trim();
+    data.telegramFileId = payload.telegramFileId ? String(payload.telegramFileId).trim() : null;
   }
 
   if (payload.description !== undefined) {

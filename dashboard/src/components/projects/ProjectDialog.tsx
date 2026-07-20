@@ -31,7 +31,8 @@ export function ProjectDialog({
       title: values.title,
       slug: values.slug,
       description: values.description,
-      telegramFileId: values.telegramFileId,
+      telegramMessageLink: values.telegramMessageLink || null,
+      telegramFileId: values.telegramFileId || null,
       thumbnail: values.thumbnail,
       isActive: values.isActive ?? true,
     };

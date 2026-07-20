@@ -92,12 +92,12 @@ export function ProjectForm({
         />
       </Field>
 
-      <Field label="Telegram File ID" id="telegramFileId" error={errors.telegramFileId?.message}>
+      <Field label="Telegram Message Link" id="telegramMessageLink" error={errors.telegramMessageLink?.message ?? undefined}>
         <Input
-          id="telegramFileId"
-          placeholder="File ID"
+          id="telegramMessageLink"
+          placeholder="https://t.me/c/..."
           autoComplete="off"
-          {...register("telegramFileId")}
+          {...register("telegramMessageLink")}
         />
       </Field>
 
@@ -134,6 +134,7 @@ function mapProjectToForm(project: Project): ProjectFormValues {
     title: project.title,
     slug: project.slug,
     description: project.description,
+    telegramMessageLink: project.telegramMessageLink,
     telegramFileId: project.telegramFileId,
     thumbnail: project.thumbnail,
     isActive: project.isActive,

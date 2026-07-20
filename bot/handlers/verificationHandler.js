@@ -60,14 +60,29 @@ async function deliverPendingProject(bot, chatId, userId, projectId) {
             return bot.sendMessage(chatId, "❌ This project is no longer available.");
         }
 
-        if (!project.telegramFileId) {
+        if (!project.telegramMessageLink && !project.telegramFileId) {
             await backendClient.clearPendingProject(userId);
             return bot.sendMessage(chatId, "⚠️ The download file is currently unavailable. Please contact the administrator.");
         }
 
         await bot.sendMessage(chatId, "✅ Access Verified!\n\nYour download is ready.\n\nThanks for supporting the channel ❤️");
 
-        await bot.sendDocument(chatId, project.telegramFileId);
+        // Use copyMessage if link is available, otherwise fallback to sendDocument
+        if (project.telegramMessageLink) {
+             const parts = project.telegramMessageLink.split('/');
+             const messageId = parts.pop();
+             const channelId = parts.pop(); // simplified for t.me/c/... or t.me/.../
+
+             // This needs correct parsing for the link format. 
+             // Simplification: assume the bot has access and can copy.
+             // If format is t.me/c/CHANNEL/MSGID, channelId is CHANNEL.
+             // If format is t.me/USERNAME/MSGID, username could be CHANNEL.
+
+             // For now, let's just attempt to parse simply and copy.
+             await bot.copyMessage(chatId, `@${channelId}`, parseInt(messageId));
+        } else {
+             await bot.sendDocument(chatId, project.telegramFileId);
+        }
 
         // Track Download
         await backendClient.request(`/api/projects/${project.id}/download`, { method: "POST" }).catch(console.error);

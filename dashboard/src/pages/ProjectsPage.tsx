@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Plus, RefreshCw, FolderKanban, Pencil, Trash2, Image } from "lucide-react";
+import { Plus, RefreshCw, FolderKanban, Pencil, Trash2, Image, Copy } from "lucide-react";
+import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -41,10 +42,20 @@ export function ProjectsPage() {
     setDeleteOpen(true);
   };
 
+  const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || "YOUR_BOT_USERNAME";
+
+// Inside ProjectsPage
+
   const handleCreate = () => {
     setEditing(null);
     setDialogOpen(true);
   };
+  
+  // Add auto-generate deep link logic (can be a helper or inline)
+  const getDeepLink = (slug: string) => `https://t.me/${BOT_USERNAME}?start=project_${slug}`;
+
+  // Update table rendering for Deep Link column
+  // ... (replace Deep Link column logic)
 
   const filtered = useMemo(() => {
     const data = projectsQuery.data ?? [];
@@ -134,6 +145,7 @@ export function ProjectsPage() {
                 <TableHead className="w-16">Thumbnail</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Deep Link</TableHead>
                 <TableHead>Views</TableHead>
                 <TableHead>Downloads</TableHead>
                 <TableHead>Conv %</TableHead>
@@ -144,6 +156,7 @@ export function ProjectsPage() {
             <TableBody>
               {sortedProjects.map((p) => {
                 const conv = p.viewCount > 0 ? ((p.downloadCount / p.viewCount) * 100).toFixed(1) : "0.0";
+                const deepLink = getDeepLink(p.slug);
                 return (
                   <TableRow key={p.id}>
                     <TableCell>
@@ -163,6 +176,24 @@ export function ProjectsPage() {
                       <Badge variant={p.isActive ? "default" : "secondary"}>
                         {p.isActive ? "Active" : "Inactive"}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <code className="rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground truncate max-w-[100px]" title={deepLink}>
+                          {deepLink}
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            navigator.clipboard.writeText(deepLink);
+                            toast.success("Link copied!");
+                          }}
+                        >
+                           <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </TableCell>
                     <TableCell>{p.viewCount}</TableCell>
                     <TableCell>{p.downloadCount}</TableCell>

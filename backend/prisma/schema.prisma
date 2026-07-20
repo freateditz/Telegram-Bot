@@ -12,7 +12,8 @@ model Project {
   title     String
   slug      String   @unique
   description String?
-  telegramFileId String
+  telegramFileId String?
+  telegramMessageLink String?
   thumbnail String?
   isActive  Boolean  @default(true)
   viewCount Int      @default(0)

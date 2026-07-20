@@ -56,7 +56,8 @@ export interface Project {
   title: string;
   slug: string;
   description: string | null;
-  telegramFileId: string;
+  telegramFileId: string | null;
+  telegramMessageLink: string | null;
   thumbnail: string | null;
   isActive: boolean;
   viewCount: number;
