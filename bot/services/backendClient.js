@@ -67,10 +67,27 @@ async function listMenuResources(platform, category) {
     const payload = await request(apiRoutes.resources.menu(platform, category));
     return payload.items || [];
 }
-
 async function getResource(platform, slug) {
     const payload = await request(apiRoutes.resources.detail(platform, slug));
     return payload.item || null;
+}
+
+async function getUserByTelegramId(telegramId) {
+    return request(`/api/users/telegram/${telegramId}`);
+}
+
+async function setPendingProject(telegramId, projectId) {
+    return request("/api/users/pending-project", {
+        method: "POST",
+        body: JSON.stringify({ telegramId, projectId }),
+    });
+}
+
+async function clearPendingProject(telegramId) {
+    return request("/api/users/clear-pending-project", {
+        method: "POST",
+        body: JSON.stringify({ telegramId }),
+    });
 }
 
 module.exports = {
@@ -83,4 +100,7 @@ module.exports = {
     markUnverified,
     listMenuResources,
     getResource,
+    getUserByTelegramId,
+    setPendingProject,
+    clearPendingProject,
 };

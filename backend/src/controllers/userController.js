@@ -16,6 +16,16 @@ const getUser = asyncHandler(async (req, res) => {
   res.json({ ok: true, item });
 });
 
+const getUserByTelegramId = asyncHandler(async (req, res) => {
+  const item = await userService.getUserByTelegramId(req.params.telegramId);
+
+  if (!item) {
+    return res.status(404).json({ ok: false, error: "User not found" });
+  }
+
+  res.json({ ok: true, item });
+});
+
 const createUser = asyncHandler(async (req, res) => {
   const item = await userService.createUser(req.body || {});
   res.status(201).json({ ok: true, item });
@@ -31,10 +41,23 @@ const deleteUser = asyncHandler(async (req, res) => {
   res.status(204).send();
 });
 
+const setPendingProject = asyncHandler(async (req, res) => {
+  await userService.setPendingProject(req.body.telegramId, req.body.projectId);
+  res.json({ ok: true });
+});
+
+const clearPendingProject = asyncHandler(async (req, res) => {
+  await userService.clearPendingProject(req.body.telegramId);
+  res.json({ ok: true });
+});
+
 module.exports = {
   listUsers,
   getUser,
+  getUserByTelegramId,
   createUser,
   updateUser,
   deleteUser,
+  setPendingProject,
+  clearPendingProject,
 };

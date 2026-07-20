@@ -18,6 +18,10 @@ export const API_ROUTES = {
     base: "/categories",
     byId: (id: number | string) => `/categories/${id}`,
   },
+  projects: {
+    base: "/projects",
+    byId: (id: number | string) => `/projects/${id}`,
+  },
   resources: {
     base: "/resources",
     byId: (id: number | string) => `/resources/${id}`,

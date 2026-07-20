@@ -4,6 +4,7 @@ import {
   Package,
   FolderTree,
   Layers,
+  FolderKanban,
   Settings,
   Bot,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const navItems: NavItem[] = [
   { to: "/resources", label: "Resources", icon: Package },
   { to: "/categories", label: "Categories", icon: FolderTree },
   { to: "/platforms", label: "Platforms", icon: Layers },
+  { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 

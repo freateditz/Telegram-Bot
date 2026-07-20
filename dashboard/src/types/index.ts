@@ -51,6 +51,23 @@ export interface User {
   createdAt: string;
 }
 
+export interface Project {
+  id: number;
+  title: string;
+  slug: string;
+  description: string | null;
+  telegramFileId: string;
+  thumbnail: string | null;
+  isActive: boolean;
+  viewCount: number;
+  downloadCount: number;
+  failedVerificationCount: number;
+  lastViewedAt: string | null;
+  lastDownloadedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /* -- Input shapes (create / update) ------------------------------------ */
 
 export type PlatformInput = Pick<Platform, "name" | "slug">;
@@ -65,3 +82,15 @@ export type ResourceInput = Omit<
 export type ResourceUpdateInput = Partial<ResourceInput>;
 
 export type SettingInput = Pick<Setting, "key" | "value">;
+
+export type ProjectInput = Omit<
+  Project,
+  | "id"
+  | "createdAt"
+  | "updatedAt"
+  | "downloadCount"
+  | "lastDownloadedAt"
+  | "viewCount"
+  | "failedVerificationCount"
+  | "lastViewedAt"
+>;

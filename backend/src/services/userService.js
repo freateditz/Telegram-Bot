@@ -73,6 +73,22 @@ async function markUnverifiedByTelegramId(telegramId) {
   });
 }
 
+async function setPendingProject(telegramId, projectId) {
+  const normalized = String(telegramId).trim();
+  return prisma.user.update({
+    where: { telegramId: normalized },
+    data: { pendingProjectId: projectId },
+  });
+}
+
+async function clearPendingProject(telegramId) {
+  const normalized = String(telegramId).trim();
+  return prisma.user.update({
+    where: { telegramId: normalized },
+    data: { pendingProjectId: null },
+  });
+}
+
 module.exports = {
   listUsers,
   getUser,
@@ -82,4 +98,6 @@ module.exports = {
   deleteUser,
   markVerifiedByTelegramId,
   markUnverifiedByTelegramId,
+  setPendingProject,
+  clearPendingProject,
 };

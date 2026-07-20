@@ -1,10 +1,16 @@
 const telegramService = require("../services/telegramService");
 const backendClient = require("../services/backendClient");
+const handleProjectDeepLink = require("../handlers/projectHandler");
 
-module.exports = function registerStartCommand(bot) {
-    bot.onText(/^\/start(?:\s|$)/i, async (msg) => {
+module.exports = function registerStartCommand(bot, backendBaseUrl) {
+    bot.onText(/^\/start(?:\s+(.+))?$/i, async (msg, match) => {
         const chatId = msg.chat.id;
         const userId = msg.from.id;
+        const payload = match[1];
+
+        if (payload && payload.startsWith("project_")) {
+            return handleProjectDeepLink(bot, chatId, msg);
+        }
 
         await backendClient.markUnverified(userId);
 

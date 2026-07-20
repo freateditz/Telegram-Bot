@@ -18,4 +18,8 @@ module.exports = {
         menu: (platform, category) => `/api/menu/${platform}/${category}`,
         detail: (platform, slug) => `/api/resource/${platform}/${slug}`,
     },
+    projects: {
+        detail: (slug) => `/api/projects/slug/${slug}`,
+        byId: (id) => `/api/projects/${id}`,
+    },
 };

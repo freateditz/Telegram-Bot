@@ -19,6 +19,9 @@ const CategoriesPage = lazy(() =>
 const PlatformsPage = lazy(() =>
   import("@/pages/PlatformsPage").then((m) => ({ default: m.PlatformsPage }))
 );
+const ProjectsPage = lazy(() =>
+  import("@/pages/ProjectsPage").then((m) => ({ default: m.ProjectsPage }))
+);
 const SettingsPage = lazy(() =>
   import("@/pages/SettingsPage").then((m) => ({ default: m.SettingsPage }))
 );
@@ -53,6 +56,7 @@ export const router = createBrowserRouter([
       { path: "resources", element: withSuspense(<ResourcesPage />) },
       { path: "categories", element: withSuspense(<CategoriesPage />) },
       { path: "platforms", element: withSuspense(<PlatformsPage />) },
+      { path: "projects", element: withSuspense(<ProjectsPage />) },
       { path: "settings", element: withSuspense(<SettingsPage />) },
       { path: "404", element: withSuspense(<NotFoundPage />) },
       { path: "*", element: <Navigate to="/404" replace /> },

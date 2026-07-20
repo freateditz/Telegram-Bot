@@ -16,6 +16,10 @@ export const queryKeys = {
     all: ["categories"] as const,
     list: () => [...queryKeys.categories.all, "list"] as const,
   },
+  projects: {
+    all: ["projects"] as const,
+    list: () => [...queryKeys.projects.all, "list"] as const,
+  },
   settings: {
     all: ["settings"] as const,
     list: () => [...queryKeys.settings.all, "list"] as const,

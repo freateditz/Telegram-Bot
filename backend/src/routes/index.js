@@ -8,6 +8,7 @@ const publicResourceRoutes = require("./publicResourceRoutes");
 const verificationRoutes = require("./verificationRoutes");
 const settingRoutes = require("./settingRoutes");
 const userRoutes = require("./userRoutes");
+const projectRoutes = require("./projectRoutes");
 
 /**
  * Route composition.
@@ -27,5 +28,6 @@ router.use("/resource", publicResourceRoutes);
 router.use("/verification", verificationRoutes);
 router.use("/settings", settingRoutes);
 router.use("/users", userRoutes);
+router.use("/projects", projectRoutes);
 
 module.exports = router;

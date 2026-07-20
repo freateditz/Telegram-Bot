@@ -7,6 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Project {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique
+  description String?
+  telegramFileId String
+  thumbnail String?
+  isActive  Boolean  @default(true)
+  viewCount Int      @default(0)
+  downloadCount Int      @default(0)
+  failedVerificationCount Int @default(0)
+  lastViewedAt DateTime?
+  lastDownloadedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  pendingUsers User[]
+}
+
 model Platform {
   id        Int      @id @default(autoincrement())
   name      String
@@ -70,4 +88,6 @@ model User {
   telegramId String   @unique
   verified   Boolean  @default(false)
   createdAt  DateTime @default(now())
+  pendingProjectId Int?
+  pendingProject   Project? @relation(fields: [pendingProjectId], references: [id])
 }
