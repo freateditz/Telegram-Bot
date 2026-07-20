@@ -13,15 +13,24 @@ async function startServer() {
     const app = createApp();
     const port = env.port;
 
-    await seedDatabase();
-    await startBot();
-
-    return new Promise((resolve) => {
-        server = app.listen(port, () => {
-            console.log(`✅ Backend running on port ${port}`);
-            resolve(server);
-        });
+    // Start listening immediately
+    server = app.listen(port, () => {
+        console.log(`✅ Backend listening on port ${port}`);
     });
+
+    // Run startup tasks in background
+    (async () => {
+        try {
+            console.log("🚀 Starting background startup tasks...");
+            await seedDatabase();
+            await startBot();
+            console.log("✅ Background startup tasks completed");
+        } catch (error) {
+            console.error("❌ Background startup tasks failed:", error);
+        }
+    })();
+
+    return server;
 }
 
 if (require.main === module) {
