@@ -3,6 +3,30 @@ const telegramService = require("../services/telegramService");
 const projectService = require("../services/projectService");
 const { deliverProject } = require("./projectHandler");
 
+/**
+ * Post-verification decision point. There is exactly ONE place in this
+ * handler that decides what happens after the user is verified:
+ *
+ *   1. If the user has a `pendingProjectId` (they came in through a
+ *      deep link), deliver the project and clear the pending pointer.
+ *   2. Otherwise, show the normal main menu.
+ *
+ * This is the single source of truth for "verification succeeded →
+ * what next?". Both the already-verified short-circuit and the
+ * just-verified path funnel through `routeAfterVerification`.
+ */
+async function routeAfterVerification(bot, chatId, userId) {
+    const user = await backendClient.getUserByTelegramId(userId);
+
+    if (user && user.pendingProjectId) {
+        console.log(`[verify] Pending project found user=${userId} project=${user.pendingProjectId} — delivering`);
+        return deliverPendingProject(bot, chatId, userId, user.pendingProjectId);
+    }
+
+    console.log(`[verify] No pending project for user=${userId} — showing main menu`);
+    return telegramService.showHome(bot, chatId, backendClient);
+}
+
 module.exports = async function handleVerification(bot, query) {
     const chatId = query.message.chat.id;
     const userId = query.from.id;
@@ -10,27 +34,31 @@ module.exports = async function handleVerification(bot, query) {
     await bot.answerCallbackQuery(query.id);
 
     const state = await backendClient.getVerificationStatus(userId);
-    const user = await backendClient.getUserByTelegramId(userId);
 
+    // Already verified (e.g. user tapped Verify again on the prompt):
+    // skip the channel-join check and route straight to the post-
+    // verification decision.
     if (state.verified) {
-        if (user && user.pendingProjectId) {
-            return await deliverPendingProject(bot, chatId, userId, user.pendingProjectId);
-        }
-        return telegramService.showHome(bot, chatId, backendClient);
+        return routeAfterVerification(bot, chatId, userId);
     }
 
     const joined = await backendClient.checkChannelMember(userId);
 
     if (!joined) {
-        const message = "❌ Access not unlocked yet.\n\nPlease subscribe to our YouTube channel and join our Telegram channel, then press \"Check Access\" again.";
+        const user = await backendClient.getUserByTelegramId(userId);
+        const projectId = user?.pendingProjectId;
 
-        if (user && user.pendingProjectId) {
-             // Track Failed Verification
-             backendClient
-                 .request(`/api/projects/${user.pendingProjectId}/failed-verification`, { method: "POST" })
-                 .catch((err) => console.error(`[verify] Failed-verification tracking failed for project=${user.pendingProjectId}:`, err.message));
-             return bot.sendMessage(chatId, message);
+        if (projectId) {
+            // Track Failed Verification (best-effort, fire-and-forget).
+            backendClient
+                .request(`/api/projects/${projectId}/failed-verification`, { method: "POST" })
+                .catch((err) => console.error(`[verify] Failed-verification tracking failed for project=${projectId}:`, err.message));
+            return bot.sendMessage(
+                chatId,
+                "❌ Access not unlocked yet.\n\nPlease subscribe to our YouTube channel and join our Telegram channel, then press \"Check Access\" again."
+            );
         }
+
         return bot.sendMessage(
             chatId,
             `❌ Verification Failed\n\nPlease subscribe to our YouTube channel and join our Telegram channel first, then click the "Verify" button again.`
@@ -39,19 +67,7 @@ module.exports = async function handleVerification(bot, query) {
 
     await backendClient.markVerified(userId);
 
-    if (user && user.pendingProjectId) {
-        return await deliverPendingProject(bot, chatId, userId, user.pendingProjectId);
-    }
-
-    await bot.sendMessage(
-        chatId,
-        `🎉 *Verification Successful!*\n\nYou can now use the inline menus below.`,
-        {
-            parse_mode: "Markdown",
-        }
-    );
-
-    return telegramService.showHome(bot, chatId, backendClient);
+    return routeAfterVerification(bot, chatId, userId);
 };
 
 async function deliverPendingProject(bot, chatId, userId, projectId) {

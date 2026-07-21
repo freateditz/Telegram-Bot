@@ -73,7 +73,21 @@ async function getResource(platform, slug) {
 }
 
 async function getUserByTelegramId(telegramId) {
-    return request(`/api/users/telegram/${telegramId}`);
+    try {
+        const payload = await request(`/api/users/telegram/${telegramId}`);
+        // The backend wraps responses in `{ ok, item }`; callers here
+        // want the user row directly so they can read fields like
+        // `pendingProjectId` without an extra hop.
+        return payload?.item ?? null;
+    } catch (err) {
+        // 404 (no such user) is a normal "no pending project" signal
+        // for our caller — surface as null so the verification
+        // handler falls through to the main menu.
+        if (/User not found|404/i.test(err.message)) {
+            return null;
+        }
+        throw err;
+    }
 }
 
 /**
