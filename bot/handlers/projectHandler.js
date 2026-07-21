@@ -1,6 +1,7 @@
 const projectService = require("../services/projectService");
 const backendClient = require("../services/backendClient");
 const commonKeyboard = require("../keyboards/commonKeyboard");
+const telegramService = require("../services/telegramService");
 
 /**
  * Handle a /start project_<slug> deep link.
@@ -94,12 +95,10 @@ async function handleProjectDeepLink(bot, chatId, msg) {
   // subscription check, `verificationHandler.routeAfterVerification`
   // picks up `pendingProjectId` and calls `deliverProject` directly.
   const prompt = await backendClient.getVerificationPrompt();
+  const verificationBody = await telegramService.buildVerificationMessage(prompt);
 
   const descriptionLine = project.description ? `${project.description}\n\n` : "";
-  const message = `📦 *${project.title}*\n\n${descriptionLine}Before downloading complete the following:
-
-✅ Subscribe to our YouTube Channel
-✅ Join our Telegram Channel`;
+  const message = `📦 *${project.title}*\n\n${descriptionLine}${verificationBody}`;
 
   return bot.sendMessage(chatId, message, {
     parse_mode: "Markdown",
