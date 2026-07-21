@@ -8,10 +8,7 @@ module.exports = function registerStartCommand(bot, backendBaseUrl) {
         const userId = msg.from.id;
         const payload = match[1];
 
-        console.log(`[DEBUG] Received /start command. msg.text: "${msg.text}", payload: "${payload}"`);
-
         if (payload && payload.startsWith("project_")) {
-            console.log(`[DEBUG] Routing to handleProjectDeepLink with payload: "${payload}"`);
             return handleProjectDeepLink(bot, chatId, msg);
         }
 

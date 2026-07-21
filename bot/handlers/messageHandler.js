@@ -6,7 +6,7 @@ module.exports = async function handleMessage(bot, msg) {
         return;
     }
 
-    if (msg.text === "/start") {
+    if (msg.text.startsWith("/start")) {
         return;
     }
 
