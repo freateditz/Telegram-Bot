@@ -16,94 +16,41 @@ async function disablePreviousKeyboard(bot, query) {
 }
 
 /**
- * Builds the verification prompt body. Five premium variants live
- * below — the active copy is `V1_CONVERSION` (highest-converting
- * pick for the editing / After Effects audience). Swap the constant
- * on the `ACTIVE_VARIANT` line below to use a different one; the
- * other four are preserved for A/B testing.
- *
- * Design rules shared by all variants:
- *   - Telegram Markdown (`*bold*`, `_italic_`).
- *   - Each action on its own line; emojis are bullet markers.
- *   - The keyboard already shows "Subscribe" / "Join Telegram" /
- *     "Check Access" — the text never duplicates those labels.
- *   - One call-to-action at the end, aligned with the
- *     `Check Access` button.
- *   - No spam / clickbait / all-caps / multiple exclamation marks.
+ * Verification prompt body. Short, scannable, and aligned with the
+ * `Check Access` button. No marketing copy, no long paragraphs.
  */
-const VERIFICATION_VARIANTS = {
-    // V1 — Conversion-optimized. Lead with the reward, frame the
-    // ask as supporting a creator, and end on a single CTA.
-    V1_CONVERSION:
-`🎬 *Welcome to the Studio*
+const VERIFICATION_PROMPT =
+`🚀 *Welcome to Freat Editz Resources*
 
-Thanks for stopping by. You're moments away from unlocking the *full project library* — presets, templates, and AE files shared exclusively with our community.
+Complete these 2 quick steps to unlock your download.
 
-To keep the downloads free for everyone, we ask for a small show of support:
+📺 *Subscribe* to our YouTube Channel
+📢 *Join* our Telegram Channel
 
-📺 *Subscribe* to our *YouTube channel*
-📢 *Join* our *Telegram channel*
+✅ Once done, tap *"Check Access"* below.`;
 
-Both take less than a minute. Once you're in, tap *Check Access* below to unlock the library instantly.`,
+/**
+ * Shown when the user clicks Verify but is not subscribed yet.
+ * Mirrors the prompt structure for visual consistency.
+ */
+const VERIFICATION_FAILED =
+`❌ *Access Not Unlocked Yet*
 
-    // V2 — Minimal, premium restraint. For users who dislike long copy.
-    V2_MINIMAL:
-`🔓 *Unlock the library*
+Please complete these steps:
 
-Two quick steps to get in:
+📺 *Subscribe to our YouTube Channel*
+📢 *Join our Telegram Channel*
 
-📺 Subscribe to our *YouTube channel*
-📢 Join our *Telegram channel*
+✅ Then tap *"Check Access"* again.`;
 
-Then tap *Check Access* to continue.`,
+async function buildVerificationMessage(_prompt) {
+    // _prompt is reserved for future dynamic injection (e.g. a
+    // personalized greeting). Today the body is static.
+    return VERIFICATION_PROMPT;
+}
 
-    // V3 — Premium creator / vault framing. For a "studio" brand voice.
-    V3_VAULT:
-`🏛 *Members-Only Studio Access*
-
-The download vault is reserved for our *active supporters*. Members get instant access to new *premium projects*, *presets*, and *editing resources* the moment they're released.
-
-Complete both steps below to enter:
-
-📺 *Subscribe* on *YouTube*
-📢 *Join* the *Telegram channel*
-
-Finished? Tap *Check Access* — your unlock is instant.`,
-
-    // V4 — Friendly community tone. Warmer, more conversational.
-    V4_COMMUNITY:
-`👋 *Hey, glad you're here*
-
-This little community shares free *editing projects* and *After Effects resources* with everyone who backs the channel.
-
-It takes a moment to get set up:
-
-📺 Subscribe to *YouTube*
-📢 Join the *Telegram* crew
-
-Thanks for the support 💛 — tap *Check Access* when you're ready.`,
-
-    // V5 — Achievement / unlock framing. Emphasizes the moment of access.
-    V5_UNLOCK:
-`✨ *You're almost in*
-
-Two steps and the doors open:
-
-📺 Subscribe on *YouTube*
-📢 Join the *Telegram channel*
-
-Complete both, then hit *Check Access* to unlock your download.`
-};
-
-const ACTIVE_VARIANT = VERIFICATION_VARIANTS.V1_CONVERSION;
-
-async function buildVerificationMessage(prompt) {
-    // The prompt backend payload is currently unused for the body
-    // (variants are static copy), but we keep the parameter so the
-    // signature stays stable for future dynamic injection (e.g. a
-    // personal welcome line derived from the user's first name).
-    void prompt;
-    return ACTIVE_VARIANT;
+async function buildVerificationFailedMessage() {
+    return VERIFICATION_FAILED;
 }
 
 async function showHome(bot, chatId, backendClient, query = null) {
@@ -232,7 +179,9 @@ async function sendTutorial(bot, chatId, channelId, messageId) {
 module.exports = {
     sendVerificationPrompt,
     buildVerificationMessage,
-    VERIFICATION_VARIANTS,
+    buildVerificationFailedMessage,
+    VERIFICATION_PROMPT,
+    VERIFICATION_FAILED,
     showHome,
     showCategoryMenu,
     showResourceMenu,

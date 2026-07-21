@@ -48,21 +48,17 @@ module.exports = async function handleVerification(bot, query) {
         const user = await backendClient.getUserByTelegramId(userId);
         const projectId = user?.pendingProjectId;
 
+        const failedMessage = await telegramService.buildVerificationFailedMessage();
+
         if (projectId) {
             // Track Failed Verification (best-effort, fire-and-forget).
             backendClient
                 .request(`/api/projects/${projectId}/failed-verification`, { method: "POST" })
                 .catch((err) => console.error(`[verify] Failed-verification tracking failed for project=${projectId}:`, err.message));
-            return bot.sendMessage(
-                chatId,
-                "❌ Access not unlocked yet.\n\nPlease subscribe to our YouTube channel and join our Telegram channel, then press \"Check Access\" again."
-            );
+            return bot.sendMessage(chatId, failedMessage, { parse_mode: "Markdown" });
         }
 
-        return bot.sendMessage(
-            chatId,
-            `❌ Verification Failed\n\nPlease subscribe to our YouTube channel and join our Telegram channel first, then click the "Verify" button again.`
-        );
+        return bot.sendMessage(chatId, failedMessage, { parse_mode: "Markdown" });
     }
 
     await backendClient.markVerified(userId);
