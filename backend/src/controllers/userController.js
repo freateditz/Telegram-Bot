@@ -46,6 +46,15 @@ const setPendingProject = asyncHandler(async (req, res) => {
   res.json({ ok: true });
 });
 
+const upsertPendingProject = asyncHandler(async (req, res) => {
+  const { telegramId, projectId } = req.body || {};
+  if (!telegramId || !projectId) {
+    return res.status(400).json({ ok: false, error: "telegramId and projectId are required" });
+  }
+  const item = await userService.upsertPendingProject(telegramId, projectId);
+  res.json({ ok: true, item });
+});
+
 const clearPendingProject = asyncHandler(async (req, res) => {
   await userService.clearPendingProject(req.body.telegramId);
   res.json({ ok: true });
@@ -59,5 +68,6 @@ module.exports = {
   updateUser,
   deleteUser,
   setPendingProject,
+  upsertPendingProject,
   clearPendingProject,
 };

@@ -9,6 +9,7 @@ const verificationRoutes = require("./verificationRoutes");
 const settingRoutes = require("./settingRoutes");
 const userRoutes = require("./userRoutes");
 const projectRoutes = require("./projectRoutes");
+const channelRoutes = require("./channelRoutes");
 
 /**
  * Route composition.
@@ -29,5 +30,6 @@ router.use("/verification", verificationRoutes);
 router.use("/settings", settingRoutes);
 router.use("/users", userRoutes);
 router.use("/projects", projectRoutes);
+router.use("/channels", channelRoutes);
 
 module.exports = router;

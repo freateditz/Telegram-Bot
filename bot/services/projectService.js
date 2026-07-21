@@ -23,14 +23,32 @@ async function request(path, options = {}) {
 }
 
 async function getProject(slug) {
-    return request(apiRoutes.projects.detail(slug));
+    const payload = await request(apiRoutes.projects.detail(slug));
+    return payload.item || null;
 }
 
 async function getProjectById(id) {
-    return request(apiRoutes.projects.byId(id));
+    const payload = await request(apiRoutes.projects.byId(id));
+    return payload.item || null;
+}
+
+/**
+ * Returns the project plus a `delivery` block describing exactly which
+ * strategy the bot should use:
+ *   { item, delivery: { strategy: "channel", chatId, messageId, channelName } }
+ *   { item, delivery: { strategy: "file", fileId } }
+ *   { item, delivery: { strategy: "link", messageLink } }
+ *   { item, delivery: { strategy: "unavailable", reason } }
+ *
+ * The bot never inspects / parses any URLs itself; the backend does
+ * the channel/message validation up front and the bot just dispatches.
+ */
+async function getProjectDelivery(slug) {
+    return request(apiRoutes.projects.delivery(slug));
 }
 
 module.exports = {
     getProject,
     getProjectById,
+    getProjectDelivery,
 };

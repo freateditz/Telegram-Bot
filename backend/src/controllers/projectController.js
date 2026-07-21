@@ -26,6 +26,65 @@ const getProjectBySlug = asyncHandler(async (req, res) => {
   res.json({ ok: true, item });
 });
 
+/**
+ * Bot-facing lookup. Returns the project plus a `delivery` block that
+ * tells the bot exactly which strategy to use:
+ *
+ *   { strategy: "channel", chatId, messageId }
+ *   { strategy: "file", fileId }
+ *   { strategy: "unavailable", reason }
+ *
+ * The bot no longer has to inspect or parse anything itself — it just
+ * reads `delivery` and dispatches.
+ */
+const getProjectDelivery = asyncHandler(async (req, res) => {
+  const result = await projectService.getProjectForDelivery(req.params.slug);
+
+  if (!result) {
+    return res.status(404).json({ ok: false, error: "Project not found" });
+  }
+
+  const { project, blocked } = result;
+  if (blocked) {
+    return res.json({
+      ok: true,
+      item: project,
+      delivery: { strategy: "unavailable", reason: blocked },
+    });
+  }
+
+  if (project.channelId && project.messageId && project.channel) {
+    return res.json({
+      ok: true,
+      item: project,
+      delivery: {
+        strategy: "channel",
+        chatId: project.channel.channelId,
+        messageId: project.messageId,
+        channelName: project.channel.name,
+      },
+    });
+  }
+
+  if (project.telegramFileId) {
+    return res.json({
+      ok: true,
+      item: project,
+      delivery: { strategy: "file", fileId: project.telegramFileId },
+    });
+  }
+
+  // Legacy `telegramMessageLink` only — try to parse it as a fallback.
+  return res.json({
+    ok: true,
+    item: project,
+    delivery: {
+      strategy: "link",
+      messageLink: project.telegramMessageLink,
+    },
+  });
+});
+
 const createProject = asyncHandler(async (req, res) => {
   const item = await projectService.createProject(req.body || {});
   res.status(201).json({ ok: true, item });
@@ -60,6 +119,7 @@ module.exports = {
   listProjects,
   getProject,
   getProjectBySlug,
+  getProjectDelivery,
   createProject,
   updateProject,
   deleteProject,

@@ -7,13 +7,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// A source Telegram channel that holds the actual file messages.
+/// Projects reference a Channel by id and pick a specific messageId
+/// inside that channel. The bot reads the message directly with
+/// `copyMessage`, so projects never need a `telegramFileId`.
+model Channel {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  channelId String   @unique
+  username  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects  Project[]
+}
+
+/// A "deep link" deliverable. Projects are reached via
+/// https://t.me/<bot>?start=project_<slug>. The bot looks up the
+/// project, runs verification, then `copyMessage`s the file from the
+/// configured Channel + messageId.
+///
+/// Legacy `telegramFileId` is preserved for backward compatibility.
+/// New projects should always set `channelId` + `messageId`.
 model Project {
   id        Int      @id @default(autoincrement())
   title     String
   slug      String   @unique
   description String?
+
+  // New delivery model: copy a specific message from a channel.
+  channelId Int?
+  messageId Int?
+
+  // Legacy delivery model (kept for backward compatibility only).
   telegramFileId String?
   telegramMessageLink String?
+
   thumbnail String?
   isActive  Boolean  @default(true)
   viewCount Int      @default(0)
@@ -23,7 +53,11 @@ model Project {
   lastDownloadedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  channel   Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
   pendingUsers User[]
+
+  @@index([channelId, messageId])
 }
 
 model Platform {

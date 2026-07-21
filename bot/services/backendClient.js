@@ -76,8 +76,13 @@ async function getUserByTelegramId(telegramId) {
     return request(`/api/users/telegram/${telegramId}`);
 }
 
-async function setPendingProject(telegramId, projectId) {
-    return request("/api/users/pending-project", {
+/**
+ * Idempotent: creates the user row if it doesn't exist, then sets the
+ * pending project. Replaces the previous `setPendingProject` which
+ * used `update` and would throw Prisma P2025 on first-time users.
+ */
+async function upsertPendingProject(telegramId, projectId) {
+    return request("/api/users/upsert-pending-project", {
         method: "POST",
         body: JSON.stringify({ telegramId, projectId }),
     });
@@ -91,6 +96,7 @@ async function clearPendingProject(telegramId) {
 }
 
 module.exports = {
+    request,
     getVerificationPrompt,
     getVerificationStatus,
     listPlatforms,
@@ -101,6 +107,6 @@ module.exports = {
     listMenuResources,
     getResource,
     getUserByTelegramId,
-    setPendingProject,
+    upsertPendingProject,
     clearPendingProject,
 };

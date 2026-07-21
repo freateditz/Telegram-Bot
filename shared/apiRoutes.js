@@ -20,6 +20,10 @@ module.exports = {
     },
     projects: {
         detail: (slug) => `/api/projects/slug/${slug}`,
+        delivery: (slug) => `/api/projects/slug/${slug}/delivery`,
         byId: (id) => `/api/projects/${id}`,
+    },
+    channels: {
+        list: "/api/channels",
     },
 };

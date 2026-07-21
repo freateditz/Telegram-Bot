@@ -1,5 +1,14 @@
 import { useMemo, useState } from "react";
-import { Plus, RefreshCw, FolderKanban, Pencil, Trash2, Image, Copy } from "lucide-react";
+import {
+  Plus,
+  RefreshCw,
+  FolderKanban,
+  Pencil,
+  Trash2,
+  Image,
+  Copy,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -21,6 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProjectDialog } from "@/components/projects/ProjectDialog";
 import { DeleteProjectDialog } from "@/components/projects/DeleteProjectDialog";
 import { useProjects } from "@/hooks/useProjects";
+import { env } from "@/config/env";
 import type { Project } from "@/types";
 
 export function ProjectsPage() {
@@ -42,32 +52,33 @@ export function ProjectsPage() {
     setDeleteOpen(true);
   };
 
-  const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || "FreatEditzResources_Bot";
-
-// Inside ProjectsPage
-
   const handleCreate = () => {
     setEditing(null);
     setDialogOpen(true);
   };
-  
-  // Add auto-generate deep link logic (can be a helper or inline)
-  const getDeepLink = (slug: string) => `https://t.me/${BOT_USERNAME}?start=project_${slug}`;
 
-  // Update table rendering for Deep Link column
-  // ... (replace Deep Link column logic)
+  // Deep links are generated dynamically — never stored in the DB.
+  const buildDeepLink = (slug: string) =>
+    `https://t.me/${env.botUsername}?start=project_${slug}`;
 
   const filtered = useMemo(() => {
     const data = projectsQuery.data ?? [];
     const searchLower = search.trim().toLowerCase();
     if (!searchLower) return data;
-    return data.filter(
-      (p) =>
-        p.title.toLowerCase().includes(searchLower) ||
-        p.slug.toLowerCase().includes(searchLower)
-    );
+    return data.filter((p) => {
+      const haystack = [
+        p.title,
+        p.slug,
+        p.channel?.name || "",
+        p.channel?.channelId || "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(searchLower);
+    });
   }, [projectsQuery.data, search]);
 
+  // Highest-converting projects first, then by total downloads.
   const sortedProjects = useMemo(() => {
     return [...filtered].sort((a, b) => b.downloadCount - a.downloadCount);
   }, [filtered]);
@@ -104,7 +115,7 @@ export function ProjectsPage() {
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
         <SearchInput
-          placeholder="Search by title or slug..."
+          placeholder="Search by title, slug, or channel..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -144,24 +155,33 @@ export function ProjectsPage() {
               <TableRow>
                 <TableHead className="w-16">Thumbnail</TableHead>
                 <TableHead>Title</TableHead>
+                <TableHead>Channel</TableHead>
+                <TableHead className="w-20">Msg ID</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Deep Link</TableHead>
-                <TableHead>Views</TableHead>
-                <TableHead>Downloads</TableHead>
-                <TableHead>Conv %</TableHead>
+                <TableHead className="w-16 text-right">Views</TableHead>
+                <TableHead className="w-20 text-right">Downloads</TableHead>
+                <TableHead className="w-16 text-right">Conv %</TableHead>
                 <TableHead>Last Download</TableHead>
                 <TableHead className="w-32 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedProjects.map((p) => {
-                const conv = p.viewCount > 0 ? ((p.downloadCount / p.viewCount) * 100).toFixed(1) : "0.0";
-                const deepLink = getDeepLink(p.slug);
+                const conv =
+                  p.viewCount > 0
+                    ? ((p.downloadCount / p.viewCount) * 100).toFixed(1)
+                    : "0.0";
+                const deepLink = buildDeepLink(p.slug);
                 return (
                   <TableRow key={p.id}>
                     <TableCell>
                       {p.thumbnail ? (
-                        <img src={p.thumbnail} alt={p.title} className="h-10 w-10 rounded object-cover" />
+                        <img
+                          src={p.thumbnail}
+                          alt={p.title}
+                          className="h-10 w-10 rounded object-cover"
+                        />
                       ) : (
                         <div className="flex h-10 w-10 items-center justify-center rounded bg-muted">
                           <Image className="h-5 w-5 text-muted-foreground" />
@@ -169,37 +189,85 @@ export function ProjectsPage() {
                       )}
                     </TableCell>
                     <TableCell className="font-medium">
-                        {p.title}
-                        <div className="text-xs text-muted-foreground">{p.slug}</div>
+                      {p.title}
+                      <div className="text-xs text-muted-foreground">
+                        {p.slug}
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={p.isActive ? "default" : "secondary"}>
+                      {p.channel ? (
+                        <div>
+                          <div className="text-sm font-medium">
+                            {p.channel.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {p.channel.channelId}
+                          </div>
+                        </div>
+                      ) : p.telegramFileId || p.telegramMessageLink ? (
+                        <Badge variant="outline">Legacy</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm tabular-nums">
+                      {p.messageId ?? "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={p.isActive ? "default" : "secondary"}
+                      >
                         {p.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <code className="rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground truncate max-w-[100px]" title={deepLink}>
+                      <div className="flex items-center gap-1">
+                        <code
+                          className="max-w-[160px] truncate rounded bg-muted px-1 py-0.5 text-xs text-muted-foreground"
+                          title={deepLink}
+                        >
                           {deepLink}
                         </code>
                         <Button
+                          type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6"
+                          className="h-7 w-7"
                           onClick={() => {
                             navigator.clipboard.writeText(deepLink);
-                            toast.success("Link copied!");
+                            toast.success("Deep link copied!");
                           }}
+                          aria-label="Copy deep link"
                         >
-                           <Copy className="h-3 w-3" />
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() =>
+                            window.open(deepLink, "_blank", "noopener,noreferrer")
+                          }
+                          aria-label="Open deep link"
+                        >
+                          <ExternalLink className="h-3 w-3" />
                         </Button>
                       </div>
                     </TableCell>
-                    <TableCell>{p.viewCount}</TableCell>
-                    <TableCell>{p.downloadCount}</TableCell>
-                    <TableCell>{conv}%</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {p.viewCount}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {p.downloadCount}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {conv}%
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                        {p.lastDownloadedAt ? new Date(p.lastDownloadedAt).toLocaleDateString() : "Never"}
+                      {p.lastDownloadedAt
+                        ? new Date(p.lastDownloadedAt).toLocaleDateString()
+                        : "Never"}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">

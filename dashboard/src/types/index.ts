@@ -51,11 +51,32 @@ export interface User {
   createdAt: string;
 }
 
+/**
+ * A source Telegram channel that holds project file messages. The
+ * bot reads the message directly from the channel — projects never
+ * need a `telegramFileId` once they reference a channel.
+ */
+export interface Channel {
+  id: number;
+  name: string;
+  channelId: string;
+  username: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { projects: number };
+}
+
 export interface Project {
   id: number;
   title: string;
   slug: string;
   description: string | null;
+  // New delivery model.
+  channelId: number | null;
+  messageId: number | null;
+  channel: Pick<Channel, "id" | "name" | "channelId" | "username" | "isActive"> | null;
+  // Legacy delivery model (kept for backward compatibility).
   telegramFileId: string | null;
   telegramMessageLink: string | null;
   thumbnail: string | null;
@@ -84,6 +105,13 @@ export type ResourceUpdateInput = Partial<ResourceInput>;
 
 export type SettingInput = Pick<Setting, "key" | "value">;
 
+export type ChannelInput = Pick<
+  Channel,
+  "name" | "channelId" | "username" | "isActive"
+>;
+
+export type ChannelUpdateInput = Partial<ChannelInput>;
+
 export type ProjectInput = Omit<
   Project,
   | "id"
@@ -94,4 +122,5 @@ export type ProjectInput = Omit<
   | "viewCount"
   | "failedVerificationCount"
   | "lastViewedAt"
+  | "channel"
 >;

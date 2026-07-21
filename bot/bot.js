@@ -6,10 +6,6 @@ const handleMessage = require("./handlers/messageHandler");
 
 let botInstance;
 
-function getBackendBaseUrl() {
-    return process.env.BACKEND_BASE_URL || `http://127.0.0.1:${process.env.BACKEND_PORT || process.env.PORT || 3000}`;
-}
-
 function createBotClient() {
     const botToken = process.env.BOT_TOKEN;
 
@@ -29,16 +25,16 @@ async function startBot() {
 
     const bot = createBotClient();
 
-    registerStartCommand(bot, getBackendBaseUrl());
+    registerStartCommand(bot);
 
     bot.on("callback_query", (query) => {
-        handleCallbackQuery(bot, query, getBackendBaseUrl()).catch((error) => {
+        handleCallbackQuery(bot, query).catch((error) => {
             console.error("Callback handler error:", error);
         });
     });
 
     bot.on("message", (msg) => {
-        handleMessage(bot, msg, getBackendBaseUrl()).catch((error) => {
+        handleMessage(bot, msg).catch((error) => {
             console.error("Message handler error:", error);
         });
     });
@@ -64,5 +60,4 @@ if (require.main === module) {
 
 module.exports = {
     startBot,
-    getBackendBaseUrl,
 };

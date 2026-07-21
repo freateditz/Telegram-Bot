@@ -25,6 +25,7 @@
 interface AppEnv {
   apiBaseUrl: string;
   appName: string;
+  botUsername: string;
 }
 
 function normalizeBaseUrl(raw: string | undefined): string {
@@ -52,7 +53,12 @@ function readEnv(): AppEnv {
     );
   }
 
-  return { apiBaseUrl, appName };
+  // The Telegram bot username is used to build the deep-link URL
+  // shown to operators. Optional — falls back to the production bot.
+  const botUsername =
+    import.meta.env.VITE_BOT_USERNAME || "FreatEditzResources_Bot";
+
+  return { apiBaseUrl, appName, botUsername };
 }
 
 export const env: AppEnv = readEnv();

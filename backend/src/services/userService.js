@@ -81,6 +81,21 @@ async function setPendingProject(telegramId, projectId) {
   });
 }
 
+/**
+ * Idempotent: creates the user row if it doesn't exist, then sets the
+ * pending project. Used by the bot when a deep link is hit by a user
+ * who has never interacted with the bot before — `setPendingProject`
+ * would throw Prisma P2025 in that case.
+ */
+async function upsertPendingProject(telegramId, projectId) {
+  const normalized = String(telegramId).trim();
+  return prisma.user.upsert({
+    where: { telegramId: normalized },
+    create: { telegramId: normalized, pendingProjectId: projectId },
+    update: { pendingProjectId: projectId },
+  });
+}
+
 async function clearPendingProject(telegramId) {
   const normalized = String(telegramId).trim();
   return prisma.user.update({
@@ -99,5 +114,6 @@ module.exports = {
   markVerifiedByTelegramId,
   markUnverifiedByTelegramId,
   setPendingProject,
+  upsertPendingProject,
   clearPendingProject,
 };

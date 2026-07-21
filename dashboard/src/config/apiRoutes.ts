@@ -22,6 +22,10 @@ export const API_ROUTES = {
     base: "/projects",
     byId: (id: number | string) => `/projects/${id}`,
   },
+  channels: {
+    base: "/channels",
+    byId: (id: number | string) => `/channels/${id}`,
+  },
   resources: {
     base: "/resources",
     byId: (id: number | string) => `/resources/${id}`,
