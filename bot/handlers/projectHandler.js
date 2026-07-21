@@ -12,9 +12,13 @@ const commonKeyboard = require("../keyboards/commonKeyboard");
  *   4. Otherwise set it as the user's pending project, increment the
  *      view counter, and show the verification prompt.
  *
- * Verification is owned by `verificationHandler` — we never re-prompt
- * an already-verified user here. If the user is already verified, we
- * trigger delivery directly instead of asking them to verify again.
+ * Verification is owned by `verificationHandler`. Deep links are
+ * always verification-gated (commands/start.js resets the user's
+ * verified flag at the start of every session), so we never
+ * short-circuit to delivery here even if a stale flag says the
+ * user is verified. The verification handler picks up
+ * `pendingProjectId` and calls `deliverProject` after the user
+ * passes the live subscription check.
  */
 async function handleProjectDeepLink(bot, chatId, msg) {
   const text = (msg.text || "").trim();
@@ -83,19 +87,12 @@ async function handleProjectDeepLink(bot, chatId, msg) {
     // Continue — the user can still verify and we'll re-set it then.
   }
 
-  // If the user is already verified, deliver immediately rather than
-  // showing the verification prompt a second time.
-  try {
-    const status = await backendClient.getVerificationStatus(telegramId);
-    if (status.verified) {
-      console.log(`[project] User ${telegramId} already verified — delivering immediately`);
-      return await deliverProject(bot, chatId, telegramId, project, delivery);
-    }
-  } catch (error) {
-    console.error(`[project] Verification status check failed for user=${telegramId}:`, error.message);
-    // Fall through to the verification prompt.
-  }
-
+  // Verification is per-session (enforced in commands/start.js), so
+  // we always show the verification prompt here — even if the
+  // backend's User.verified flag happens to be true from a previous
+  // session. After the user clicks Verify and passes the
+  // subscription check, `verificationHandler.routeAfterVerification`
+  // picks up `pendingProjectId` and calls `deliverProject` directly.
   const prompt = await backendClient.getVerificationPrompt();
 
   const descriptionLine = project.description ? `${project.description}\n\n` : "";
@@ -114,8 +111,8 @@ async function handleProjectDeepLink(bot, chatId, msg) {
 }
 
 /**
- * Deliver a project to a chat. Called from either the deep-link
- * handler (already verified) or the verification handler.
+ * Deliver a project to a chat. Called from the verification handler
+ * after the user clicks Verify and passes the live subscription check.
  *
  * The strategy is decided by the backend — this function just executes
  * the right Telegram call. After delivery it tracks the download and
