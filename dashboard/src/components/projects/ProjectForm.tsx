@@ -267,11 +267,11 @@ function DeepLinkPreview({ slug }: { slug: string | undefined }) {
       <div className="mb-1 text-xs font-medium text-muted-foreground">
         Deep link preview
       </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <code className="flex-1 truncate rounded bg-background px-2 py-1 text-xs">
+      <div className="flex flex-col gap-2">
+        <code className="block w-full break-all rounded bg-background px-2 py-1 text-xs [overflow-wrap:anywhere]">
           {url}
         </code>
-        <div className="flex gap-1">
+        <div className="flex justify-end gap-1">
           <Button
             type="button"
             variant="ghost"
