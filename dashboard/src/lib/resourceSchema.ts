@@ -18,11 +18,8 @@ export const resourceFormSchema = z.object({
   slug: z
     .string()
     .trim()
-    .optional()
-    .transform((val) => (val === "" ? undefined : val))
-    .refine((val) => !val || /^[a-z0-9-]+$/.test(val), {
-      message: "Slug must be lowercase letters, numbers, and dashes",
-    }),
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and dashes"),
   description: optionalString,
   version: optionalString,
   platformId: z

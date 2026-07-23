@@ -36,6 +36,7 @@ interface ResourceFormProps {
 
 const EMPTY_DEFAULTS: ResourceFormValues = {
   name: "",
+  slug: "",
   description: null,
   version: null,
   platformId: 0,
@@ -414,7 +415,7 @@ export function ResourceForm({
 function mapResourceToForm(resource: Resource): ResourceFormValues {
   return {
     name: resource.name,
-    slug: resource.slug,
+    slug: resource.slug ?? "",
     description: resource.description,
     version: resource.version,
     platformId: resource.platformId,

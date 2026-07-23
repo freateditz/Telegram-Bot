@@ -21,7 +21,7 @@ export interface Category {
 export interface Resource {
   id: number;
   name: string;
-  slug: string;
+  slug: string | null;
   description: string | null;
   version: string | null;
   platformId: number;
