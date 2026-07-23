@@ -107,9 +107,31 @@ async function getResource(id) {
     });
 }
 
+async function getResourceBySlug(slug) {
+    return prisma.resource.findUnique({
+        where: { slug },
+        include: { platform: true, category: true },
+    });
+}
+
 async function createResource(payload) {
     const name = String(payload.name || "").trim();
-    const slug = String(payload.slug || toSlug(name)).trim();
+    let slug = (payload.slug || toSlug(name)).trim();
+    if (slug === "") {
+        slug = null;
+    }
+
+    if (slug && !/^[a-z0-9-]+$/.test(slug)) {
+        throw new HttpError(400, "Invalid slug format");
+    }
+
+    if (slug) {
+        const existing = await prisma.resource.findUnique({ where: { slug } });
+        if (existing) {
+            throw new HttpError(400, "Slug already exists");
+        }
+    }
+
     const description = String(payload.description || "").trim() || null;
     const version = String(payload.version || "").trim() || null;
 
@@ -122,8 +144,8 @@ async function createResource(payload) {
     const displayOrder = toInt(payload.displayOrder, 0);
     const isVisible = toBoolean(payload.isVisible, true);
 
-    if (!name || !slug) {
-        throw new HttpError(400, "name and slug are required");
+    if (!name) {
+        throw new HttpError(400, "name is required");
     }
 
     const platformId = Number(payload.platformId);
@@ -160,7 +182,27 @@ async function updateResource(id, payload) {
     }
 
     if (payload.slug !== undefined) {
-        data.slug = String(payload.slug).trim();
+        let slug = String(payload.slug).trim();
+        if (slug === "") {
+            slug = null;
+        }
+
+        if (slug && !/^[a-z0-9-]+$/.test(slug)) {
+            throw new HttpError(400, "Invalid slug format");
+        }
+
+        if (slug) {
+            const existing = await prisma.resource.findFirst({
+                where: {
+                    slug,
+                    id: { not: id }
+                }
+            });
+            if (existing) {
+                throw new HttpError(400, "Slug already exists");
+            }
+        }
+        data.slug = slug;
     }
 
     // Handle optional fields with potential null updates
@@ -222,6 +264,7 @@ async function deleteResource(id) {
 module.exports = {
     listResources,
     getResource,
+    getResourceBySlug,
     createResource,
     updateResource,
     deleteResource,

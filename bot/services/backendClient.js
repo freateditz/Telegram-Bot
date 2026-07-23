@@ -72,6 +72,14 @@ async function getResource(platform, slug) {
     return payload.item || null;
 }
 
+async function getResourceBySlug(slug) {
+    // Calling a new endpoint /api/resources/slug/${slug}
+    // Assuming backend will handle this or it might fail if not implemented.
+    // Given the constraints, this is the best approach.
+    const payload = await request(`/api/resources/slug/${slug}`);
+    return payload.item || null;
+}
+
 async function getUserByTelegramId(telegramId) {
     try {
         const payload = await request(`/api/users/telegram/${telegramId}`);

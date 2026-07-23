@@ -17,6 +17,16 @@ const getResource = asyncHandler(async (req, res) => {
   res.json({ ok: true, item });
 });
 
+const getResourceBySlug = asyncHandler(async (req, res) => {
+  const item = await resourceService.getResourceBySlug(req.params.slug);
+
+  if (!item) {
+    return res.status(404).json({ ok: false, error: "Resource not found" });
+  }
+
+  res.json({ ok: true, item });
+});
+
 const createResource = asyncHandler(async (req, res) => {
   const item = await resourceService.createResource(req.body || {});
   res.status(201).json({ ok: true, item });
@@ -76,6 +86,7 @@ const getPublicResource = asyncHandler(async (req, res) => {
 module.exports = {
   listResources,
   getResource,
+  getResourceBySlug,
   createResource,
   updateResource,
   deleteResource,

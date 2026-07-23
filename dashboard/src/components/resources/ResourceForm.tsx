@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Copy, Check } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Field } from "@/components/ui/field";
 import { SubmitActions } from "@/components/ui/submit-actions";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -34,7 +36,6 @@ interface ResourceFormProps {
 
 const EMPTY_DEFAULTS: ResourceFormValues = {
   name: "",
-  slug: "",
   description: null,
   version: null,
   platformId: 0,
@@ -60,6 +61,7 @@ export function ResourceForm({
   const [showDirectDownload, setShowDirectDownload] = useState(true);
   const [showFixLink, setShowFixLink] = useState(false);
   const [showTelegramTutorial, setShowTelegramTutorial] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (defaultValues) {
@@ -90,11 +92,21 @@ export function ResourceForm({
 
   // Auto-derive slug from name until the user manually edits it.
   const name = watch("name");
+  const slug = watch("slug");
+  
   useEffect(() => {
     if (!slugTouched && name) {
       setValue("slug", toSlug(name), { shouldValidate: true });
     }
   }, [name, slugTouched, setValue]);
+
+  const deepLink = `https://t.me/FreatEditzResources_Bot?start=resource_${slug || "..."}`;
+
+  const copyDeepLink = useCallback(() => {
+    navigator.clipboard.writeText(deepLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [deepLink]);
 
   const onSubmitWrapper = (values: ResourceFormValues) => {
     const data = { ...values };
@@ -136,10 +148,34 @@ export function ResourceForm({
             placeholder="adobe-premiere-pro"
             autoComplete="off"
             {...register("slug", {
-              onChange: () => setSlugTouched(true),
+              onChange: (e) => {
+                const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                setValue("slug", val, { shouldValidate: true });
+                setSlugTouched(true);
+              },
             })}
           />
         </Field>
+      </div>
+
+      <div className="rounded-md border border-border bg-muted/20 p-4">
+        <Label className="mb-2 block text-sm">Deep Link Preview</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            readOnly
+            value={deepLink}
+            className="font-mono text-sm"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={copyDeepLink}
+            disabled={!slug}
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3 rounded-md border border-border bg-muted/20 p-4">

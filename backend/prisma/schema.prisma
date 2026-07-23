@@ -83,7 +83,7 @@ model Resource {
   id Int @id @default(autoincrement())
 
   name String
-  slug String
+  slug String?
 
   description String?
   version     String?
@@ -106,7 +106,7 @@ model Resource {
   platform Platform @relation(fields: [platformId], references: [id], onDelete: Restrict)
   category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
-  @@unique([platformId, slug])
+  @@unique([slug])
   @@index([platformId])
   @@index([categoryId])
   @@index([displayOrder])

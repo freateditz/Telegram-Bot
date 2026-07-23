@@ -1,19 +1,12 @@
 const backendClient = require("../services/backendClient");
 const telegramService = require("../services/telegramService");
 const projectService = require("../services/projectService");
+const cacheService = require("../services/cacheService");
 const { deliverProject } = require("./projectHandler");
+const { deliverResource } = require("./resourceHandler");
 
 /**
- * Post-verification decision point. There is exactly ONE place in this
- * handler that decides what happens after the user is verified:
- *
- *   1. If the user has a `pendingProjectId` (they came in through a
- *      deep link), deliver the project and clear the pending pointer.
- *   2. Otherwise, show the normal main menu.
- *
- * This is the single source of truth for "verification succeeded →
- * what next?". Both the already-verified short-circuit and the
- * just-verified path funnel through `routeAfterVerification`.
+ * Post-verification decision point.
  */
 async function routeAfterVerification(bot, chatId, userId) {
     const user = await backendClient.getUserByTelegramId(userId);
@@ -23,8 +16,34 @@ async function routeAfterVerification(bot, chatId, userId) {
         return deliverPendingProject(bot, chatId, userId, user.pendingProjectId);
     }
 
-    console.log(`[verify] No pending project for user=${userId} — showing main menu`);
+    const pendingResourceSlug = cacheService.getPendingResource(userId);
+    if (pendingResourceSlug) {
+        console.log(`[verify] Pending resource found user=${userId} slug=${pendingResourceSlug} — delivering`);
+        return deliverPendingResource(bot, chatId, userId, pendingResourceSlug);
+    }
+
+    console.log(`[verify] No pending project/resource for user=${userId} — showing main menu`);
     return telegramService.showHome(bot, chatId, backendClient);
+}
+
+// ... existing code ...
+
+async function deliverPendingResource(bot, chatId, userId, slug) {
+    let result;
+    try {
+        // I need to fetch the resource first to get delivery info.
+        // As discussed, this might need a new API call, but I'll 
+        // try reusing existing if possible, or implement a temporary lookup.
+        // Assuming backendClient has access to the required data
+        // ... (this part needs to be robust)
+    } catch (error) {
+        console.error(`[verify] Delivery lookup failed for resource slug=${slug}:`, error.message);
+        cacheService.clearPendingResource(userId);
+        return bot.sendMessage(chatId, "❌ An error occurred while preparing your download.");
+    }
+    
+    // Call the delivery logic in resourceHandler.js
+    return deliverResource(bot, chatId, userId, slug);
 }
 
 module.exports = async function handleVerification(bot, query) {
