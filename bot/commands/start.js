@@ -17,6 +17,8 @@ module.exports = function registerStartCommand(bot) {
             await backendClient.markUnverified(userId);
         } catch (err) {
             console.error(`[start] markUnverified failed for user=${userId}:`, err.message);
+            // Gracefully handle backend failure; do not crash the bot.
+            return bot.sendMessage(chatId, "⚠️ Service temporarily unavailable. Please try again later.");
         }
 
         if (payload.startsWith("project_")) {
@@ -28,7 +30,12 @@ module.exports = function registerStartCommand(bot) {
         }
 
         // Plain /start — verification is required every session.
-        const prompt = await backendClient.getVerificationPrompt();
-        return telegramService.sendVerificationPrompt(bot, chatId, prompt);
+        try {
+            const prompt = await backendClient.getVerificationPrompt();
+            return telegramService.sendVerificationPrompt(bot, chatId, prompt);
+        } catch (err) {
+            console.error(`[start] getVerificationPrompt failed for user=${userId}:`, err.message);
+            return bot.sendMessage(chatId, "⚠️ Service temporarily unavailable. Please try again later.");
+        }
     });
 };

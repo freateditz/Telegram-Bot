@@ -5,21 +5,40 @@ function getBaseUrl() {
 }
 
 async function request(path, options = {}) {
-    const response = await fetch(`${getBaseUrl()}${path}`, {
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-        },
-        ...options,
-    });
+    const url = `${getBaseUrl()}${path}`;
+    try {
+        const response = await fetch(url, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {}),
+            },
+            ...options,
+        });
 
-    const payload = await response.json().catch(() => ({}));
+        const payload = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-        throw new Error(payload.error || `Request failed: ${response.status}`);
+        if (!response.ok) {
+            console.error(`[backendClient] Request failed: ${options.method || 'GET'} ${url}`);
+            console.error(`[backendClient] Status: ${response.status}`);
+            console.error(`[backendClient] Payload:`, payload);
+            throw new Error(payload.error || `Request failed: ${response.status}`);
+        }
+
+        return payload;
+    } catch (err) {
+        console.error("--- Backend Request Error ---");
+        console.error("Backend URL:", getBaseUrl());
+        console.error("HTTP Method:", options.method || "GET");
+        console.error("Endpoint:", path);
+        console.error("Error:", err.message);
+        console.error("Cause:", err.cause);
+        console.error("Stack:", err.stack);
+        if (options.body) {
+            console.error("Request Body:", options.body);
+        }
+        console.error("-----------------------------");
+        throw err;
     }
-
-    return payload;
 }
 
 async function getVerificationPrompt() {
