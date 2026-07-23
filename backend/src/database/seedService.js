@@ -39,11 +39,8 @@ async function seedResources() {
 
     await prisma.resource.upsert({
       where: {
-  platformId_slug: {
-    platformId: platform.id,
-    slug: resourceData.slug,
-  },
-},
+        slug: resourceData.slug,
+      },
       create: {
         ...resourceData,
         platformId: platform.id,
