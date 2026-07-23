@@ -71,7 +71,13 @@ async function deliverResource(bot, chatId, userId, resource) {
         
     } catch (error) {
         console.error(`[Resource Deep Link] Delivery failed user=${userId} resource=${resource.id}:`, error.message);
-        return bot.sendMessage(chatId, `❌ Delivery failed: ${error.message}`);
+        
+        // Only report the error if nothing was successfully delivered
+        if (!deliveredSomething) {
+            return bot.sendMessage(chatId, `❌ Delivery failed: ${error.message}`);
+        } else {
+            console.log(`[Resource Deep Link] Logged partial delivery failure internally, skipping user alert.`);
+        }
     }
 }
 
