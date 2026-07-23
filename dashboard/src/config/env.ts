@@ -29,29 +29,21 @@ interface AppEnv {
 }
 
 function normalizeBaseUrl(raw: string | undefined): string {
-  if (!raw) {
-    throw new Error(
-      "VITE_API_BASE_URL is not defined. Set it in dashboard/.env, " +
-        "dashboard/.env.production, or the Vercel project environment " +
-        "variables."
-    );
-  }
+  // Fallback to localhost if not defined
+  const baseUrl = raw || "http://localhost:3000/api";
+  
   // Strip any trailing slashes so `${apiBaseUrl}/resources` always
   // produces `/api/resources` — never `//resources`.
-  return raw.replace(/\/+$/, "");
+  return baseUrl.replace(/\/+$/, "");
 }
 
 function readEnv(): AppEnv {
-  const apiBaseUrl = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
-  const appName = import.meta.env.VITE_APP_NAME;
+  // Use VITE_API_URL as the primary variable for the API base URL.
+  const apiBaseUrl = normalizeBaseUrl(import.meta.env.VITE_API_URL);
+  
+  console.log("Resolved API URL:", apiBaseUrl);
 
-  if (!appName) {
-    throw new Error(
-      "VITE_APP_NAME is not defined. Set it in dashboard/.env, " +
-        "dashboard/.env.production, or the Vercel project environment " +
-        "variables."
-    );
-  }
+  const appName = import.meta.env.VITE_APP_NAME || "Admin Dashboard";
 
   // The Telegram bot username is used to build the deep-link URL
   // shown to operators. Optional — falls back to the production bot.
