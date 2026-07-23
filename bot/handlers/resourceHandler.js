@@ -18,52 +18,38 @@ async function handleResourceDeepLink(bot, chatId, msg) {
     return telegramService.sendVerificationPrompt(bot, chatId, prompt);
 }
 
-async function deliverResource(bot, chatId, userId, slug) {
-    // 1. Fetch resource
-    // Need a way to fetch resource by slug. 
-    // Since I cannot change backend, I'll attempt a search.
-    // Or, assume getResourceBySlug(slug) works if I implement it
-    // in backendClient.js. Let me add it there properly.
-    
-    let resource;
-    try {
-        resource = await backendClient.getResourceBySlug(slug);
-    } catch (error) {
-        console.error(`[resource] Delivery lookup failed for slug=${slug}:`, error.message);
-        cacheService.clearPendingResource(userId);
-        return bot.sendMessage(chatId, "❌ An error occurred while preparing your download.");
-    }
-
-    if (!resource) {
-        cacheService.clearPendingResource(userId);
-        return bot.sendMessage(chatId, "❌ Resource not found.");
-    }
-
-    if (!resource.isVisible) {
-        cacheService.clearPendingResource(userId);
-        return bot.sendMessage(chatId, "🚫 This resource is currently unavailable.");
-    }
+async function deliverResource(bot, chatId, userId, resource) {
+    console.log(`[Resource Deep Link] Preparing download for resource id=${resource.id}, slug=${resource.slug}`);
 
     // 2. Deliver
     try {
         await bot.sendMessage(chatId, "✅ Access Verified!\n\nYour resource is ready.");
+        console.log(`[Resource Deep Link] Verification message sent`);
 
         // Similar to project delivery, use channel/file logic
         if (resource.tutorialChannelId && resource.tutorialMessageId) {
+            console.log(`[Resource Deep Link] Sending via tutorial channel ${resource.tutorialChannelId} message ${resource.tutorialMessageId}`);
             await bot.copyMessage(chatId, resource.tutorialChannelId, resource.tutorialMessageId);
+            console.log(`[Resource Deep Link] Tutorial sent`);
         } else if (resource.downloadLink) {
+            console.log(`[Resource Deep Link] Sending download link`);
             await bot.sendMessage(chatId, `Download Link: ${resource.downloadLink}`);
+            console.log(`[Resource Deep Link] Link sent`);
         } else {
+            console.error(`[Resource Deep Link] No delivery method found for resource id=${resource.id}`);
             throw new Error("No delivery method found");
         }
 
         // Track download
+        console.log(`[Resource Deep Link] Tracking download for resource id=${resource.id}`);
         await backendClient.request(`/api/resources/${resource.id}/download`, { method: "POST" });
         cacheService.clearPendingResource(userId);
+        console.log(`[Resource Deep Link] Delivery complete`);
         
     } catch (error) {
-        console.error(`[resource] Delivery failed user=${userId} resource=${resource.id}:`, error.message);
-        return bot.sendMessage(chatId, "❌ Delivery failed.");
+        console.error(`[Resource Deep Link] Delivery failed user=${userId} resource=${resource.id}:`, error.message);
+        console.error(error.stack);
+        return bot.sendMessage(chatId, `❌ Delivery failed: ${error.message}`);
     }
 }
 

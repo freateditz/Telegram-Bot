@@ -29,21 +29,27 @@ async function routeAfterVerification(bot, chatId, userId) {
 // ... existing code ...
 
 async function deliverPendingResource(bot, chatId, userId, slug) {
-    let result;
+    console.log(`[Resource Deep Link] Loading resource slug=${slug}`);
+    let resource;
     try {
-        // I need to fetch the resource first to get delivery info.
-        // As discussed, this might need a new API call, but I'll 
-        // try reusing existing if possible, or implement a temporary lookup.
-        // Assuming backendClient has access to the required data
-        // ... (this part needs to be robust)
+        resource = await backendClient.getResourceBySlug(slug);
+        console.log(`[Resource Deep Link] Resource lookup result:`, resource ? `found id=${resource.id}` : "not found");
     } catch (error) {
-        console.error(`[verify] Delivery lookup failed for resource slug=${slug}:`, error.message);
+        console.error(`[Resource Deep Link] Resource lookup failed for slug=${slug}:`, error.message);
+        console.error(error.stack);
         cacheService.clearPendingResource(userId);
-        return bot.sendMessage(chatId, "❌ An error occurred while preparing your download.");
+        return bot.sendMessage(chatId, `❌ An error occurred while preparing your download: ${error.message}`);
     }
     
+    if (!resource) {
+        console.log(`[Resource Deep Link] Resource not found for slug=${slug}`);
+        cacheService.clearPendingResource(userId);
+        return bot.sendMessage(chatId, "❌ Resource not found.");
+    }
+
     // Call the delivery logic in resourceHandler.js
-    return deliverResource(bot, chatId, userId, slug);
+    console.log(`[Resource Deep Link] Preparing delivery for resource id=${resource.id}`);
+    return deliverResource(bot, chatId, userId, resource); // Passing the resource object instead of just slug
 }
 
 module.exports = async function handleVerification(bot, query) {

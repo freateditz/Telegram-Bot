@@ -1,0 +1,13 @@
+
+> telegram-download-bot@1.0.0 start:backend
+> node backend/src/server.js
+
+◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+Successfully loaded .env: 4 variables
+DATABASE_URL from process.env: postgresql://postgres.jtguqwjtqybbtjxurdhx:FREATEDITZ.cloud@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
+◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+🚀 Starting background startup tasks...
+✅ Backend listening on port 3000
+✅ Telegram Bot Started
+✅ Polling Started
+✅ Background startup tasks completed

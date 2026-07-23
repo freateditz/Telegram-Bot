@@ -147,6 +147,7 @@ module.exports = {
     markUnverified,
     listMenuResources,
     getResource,
+    getResourceBySlug,
     getUserByTelegramId,
     upsertPendingProject,
     clearPendingProject,
