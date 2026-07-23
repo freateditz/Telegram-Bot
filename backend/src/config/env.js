@@ -1,8 +1,18 @@
-require("dotenv").config();
+const dotenv = require("dotenv");
+const path = require("path");
+const result = dotenv.config();
+
+if (result.error) {
+  console.error("Error loading .env:", result.error);
+} else {
+  console.log("Successfully loaded .env:", Object.keys(result.parsed || {}).length, "variables");
+}
+
+console.log("DATABASE_URL from process.env:", process.env.DATABASE_URL);
 
 /**
  * CORS allowlist resolution.
- *
+...
  * Goal: production should "just work" on a fresh Railway deploy with
  * ZERO environment variables. So the default allowlist includes the
  * Vercel production domain (the one shipped in `dashboard/.env`) plus
