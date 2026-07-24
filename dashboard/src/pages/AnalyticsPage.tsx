@@ -1,13 +1,10 @@
 import {
-  Activity,
   Download,
   MousePointerClick,
   Users,
-  CalendarDays,
-  Target,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/ui/stat-card";
 import {
@@ -22,12 +19,6 @@ export function AnalyticsPage() {
   const dailyQuery = useAnalyticsDaily();
   const topProjectsQuery = useAnalyticsTopProjects();
   const recentEventsQuery = useAnalyticsRecentEvents();
-
-  const isLoading =
-    overviewQuery.isLoading ||
-    dailyQuery.isLoading ||
-    topProjectsQuery.isLoading ||
-    recentEventsQuery.isLoading;
 
   return (
     <>

@@ -7,7 +7,6 @@ import {
   FolderKanban,
   Radio,
   Settings,
-  Bot,
   BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
