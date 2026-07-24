@@ -195,6 +195,25 @@ async function getAdvancedAnalytics(req, res) {
   });
 }
 
+async function getTopProjects(req, res) {
+  const topProjects = await prisma.analyticsEvent.groupBy({
+    by: ['projectId'],
+    _count: { projectId: true },
+    where: { projectId: { not: null }, eventType: 'RESOURCE_DOWNLOAD' },
+    orderBy: { _count: { projectId: 'desc' } },
+    take: 10,
+  });
+  res.json(topProjects);
+}
+
+async function getRecentEvents(req, res) {
+  const events = await prisma.analyticsEvent.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  });
+  res.json(events);
+}
+
 module.exports = {
   health,
   track,
