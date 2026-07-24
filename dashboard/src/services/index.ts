@@ -4,3 +4,4 @@ export { channelService } from "./channelService";
 export { projectService } from "./projectService";
 export { resourceService } from "./resourceService";
 export { settingService } from "./settingService";
+export { analyticsService } from "./analyticsService";

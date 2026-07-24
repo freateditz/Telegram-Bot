@@ -10,6 +10,7 @@ const settingRoutes = require("./settingRoutes");
 const userRoutes = require("./userRoutes");
 const projectRoutes = require("./projectRoutes");
 const channelRoutes = require("./channelRoutes");
+const analyticsRoutes = require("./analyticsRoutes");
 
 /**
  * Route composition.
@@ -31,5 +32,6 @@ router.use("/settings", settingRoutes);
 router.use("/users", userRoutes);
 router.use("/projects", projectRoutes);
 router.use("/channels", channelRoutes);
+router.use("/analytics", analyticsRoutes);
 
 module.exports = router;

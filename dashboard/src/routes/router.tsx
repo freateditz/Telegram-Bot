@@ -10,6 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 const DashboardPage = lazy(() =>
   import("@/pages/DashboardPage").then((m) => ({ default: m.DashboardPage }))
 );
+const AnalyticsPage = lazy(() =>
+  import("@/pages/AnalyticsPage").then((m) => ({ default: m.AnalyticsPage }))
+);
 const ResourcesPage = lazy(() =>
   import("@/pages/ResourcesPage").then((m) => ({ default: m.ResourcesPage }))
 );
@@ -56,6 +59,7 @@ export const router = createBrowserRouter([
     element: <DashboardLayout />,
     children: [
       { index: true, element: withSuspense(<DashboardPage />) },
+      { path: "analytics", element: withSuspense(<AnalyticsPage />) },
       { path: "resources", element: withSuspense(<ResourcesPage />) },
       { path: "categories", element: withSuspense(<CategoriesPage />) },
       { path: "platforms", element: withSuspense(<PlatformsPage />) },

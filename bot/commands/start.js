@@ -12,6 +12,17 @@ module.exports = function registerStartCommand(bot) {
         const userId = msg.from.id;
         const payload = match[1] ? match[1].trim() : "";
 
+        // Track BOT_START
+        try {
+            await backendClient.trackAnalyticsEvent({
+                userId,
+                eventType: 'BOT_START',
+                metadata: { payload }
+            });
+        } catch (err) {
+            console.error(`[start] Analytics tracking failed:`, err.message);
+        }
+
         // ALWAYS reset the verified flag at the start of a session.
         try {
             await backendClient.markUnverified(userId);

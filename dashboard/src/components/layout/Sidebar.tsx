@@ -8,6 +8,7 @@ import {
   Radio,
   Settings,
   Bot,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
@@ -22,6 +23,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/resources", label: "Resources", icon: Package },
   { to: "/categories", label: "Categories", icon: FolderTree },
   { to: "/platforms", label: "Platforms", icon: Layers },

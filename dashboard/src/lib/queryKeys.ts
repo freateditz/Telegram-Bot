@@ -32,4 +32,12 @@ export const queryKeys = {
     all: ["users"] as const,
     list: () => [...queryKeys.users.all, "list"] as const,
   },
+  analytics: {
+    all: ["analytics"] as const,
+    overview: () => [...queryKeys.analytics.all, "overview"] as const,
+    daily: () => [...queryKeys.analytics.all, "daily"] as const,
+    projects: () => [...queryKeys.analytics.all, "projects"] as const,
+    topProjects: () => [...queryKeys.analytics.all, "topProjects"] as const,
+    recentEvents: () => [...queryKeys.analytics.all, "recentEvents"] as const,
+  },
 };

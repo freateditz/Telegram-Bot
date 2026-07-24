@@ -78,6 +78,18 @@ async function handleProjectDeepLink(bot, chatId, msg) {
     .request(`/api/projects/${project.id}/view`, { method: "POST" })
     .catch((err) => console.error(`[project] View tracking failed for project=${project.id}:`, err.message));
 
+  // Track PROJECT_OPEN
+  try {
+      await backendClient.trackAnalyticsEvent({
+          userId: telegramId,
+          projectId: project.id,
+          eventType: 'PROJECT_OPEN',
+          metadata: { slug }
+      });
+  } catch (err) {
+      console.error(`[project] Analytics tracking failed:`, err.message);
+  }
+
   // Stash the project as pending so the verification handler can
   // resume delivery after the user verifies. This MUST be an upsert
   // — a brand-new user has no row yet and `update` throws P2025.
@@ -124,16 +136,19 @@ async function deliverProject(bot, chatId, userId, project, delivery) {
       "✅ Access Verified!\n\nYour download is ready.\n\nThanks for supporting the channel ❤️"
     );
 
+    let sentFile = false;
     if (delivery.strategy === "channel") {
       console.log(
         `[project] copyMessage start user=${userId} project=${project.id} chatId=${delivery.chatId} messageId=${delivery.messageId}`
       );
       await bot.copyMessage(chatId, delivery.chatId, delivery.messageId);
       console.log(`[project] copyMessage success user=${userId} project=${project.id}`);
+      sentFile = true;
     } else if (delivery.strategy === "file") {
       console.log(`[project] sendDocument start user=${userId} project=${project.id}`);
       await bot.sendDocument(chatId, delivery.fileId);
       console.log(`[project] sendDocument success user=${userId} project=${project.id}`);
+      sentFile = true;
     } else if (delivery.strategy === "link" && delivery.messageLink) {
       // Last-resort fallback: parse a t.me/... link and try to copy.
       const parsed = parseTelegramLink(delivery.messageLink);
@@ -145,8 +160,23 @@ async function deliverProject(bot, chatId, userId, project, delivery) {
       );
       await bot.copyMessage(chatId, parsed.chatId, parsed.messageId);
       console.log(`[project] copyMessage (legacy link) success user=${userId} project=${project.id}`);
+      sentFile = true;
     } else {
       throw new Error(`Unknown delivery strategy: ${delivery.strategy}`);
+    }
+
+    // Track RESOURCE_DOWNLOAD/FILE_SENT
+    if (sentFile) {
+        try {
+            await backendClient.trackAnalyticsEvent({
+                userId: userId,
+                projectId: project.id,
+                eventType: 'FILE_SENT',
+                metadata: { strategy: delivery.strategy }
+            });
+        } catch (err) {
+            console.error(`[project] Analytics tracking failed:`, err.message);
+        }
     }
 
     backendClient

@@ -126,3 +126,19 @@ model User {
   pendingProjectId Int?
   pendingProject   Project? @relation(fields: [pendingProjectId], references: [id])
 }
+
+model AnalyticsEvent {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  projectId  Int?
+  resourceId Int?
+  eventType  String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([projectId, eventType, createdAt])
+  @@index([resourceId, eventType, createdAt])
+}

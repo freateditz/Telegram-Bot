@@ -136,6 +136,13 @@ async function clearPendingProject(telegramId) {
     });
 }
 
+async function trackAnalyticsEvent(eventData) {
+    return request("/api/analytics/track", {
+        method: "POST",
+        body: JSON.stringify(eventData),
+    });
+}
+
 module.exports = {
     request,
     getVerificationPrompt,
@@ -151,4 +158,5 @@ module.exports = {
     getUserByTelegramId,
     upsertPendingProject,
     clearPendingProject,
+    trackAnalyticsEvent,
 };

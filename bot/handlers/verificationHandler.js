@@ -56,6 +56,17 @@ module.exports = async function handleVerification(bot, query) {
     const chatId = query.message.chat.id;
     const userId = query.from.id;
 
+    // Track VERIFY_CLICK
+    try {
+        await backendClient.trackAnalyticsEvent({
+            userId,
+            eventType: 'VERIFY_CLICK',
+            metadata: { callbackQueryId: query.id }
+        });
+    } catch (err) {
+        console.error(`[verify] Analytics tracking failed:`, err.message);
+    }
+
     await bot.answerCallbackQuery(query.id);
 
     const state = await backendClient.getVerificationStatus(userId);
@@ -73,6 +84,17 @@ module.exports = async function handleVerification(bot, query) {
         const user = await backendClient.getUserByTelegramId(userId);
         const projectId = user?.pendingProjectId;
 
+        // Track VERIFY_FAILED
+        try {
+            await backendClient.trackAnalyticsEvent({
+                userId,
+                projectId,
+                eventType: 'VERIFY_FAILED',
+            });
+        } catch (err) {
+            console.error(`[verify] Analytics tracking failed:`, err.message);
+        }
+
         const failedMessage = await telegramService.buildVerificationFailedMessage();
 
         if (projectId) {
@@ -84,6 +106,16 @@ module.exports = async function handleVerification(bot, query) {
         }
 
         return bot.sendMessage(chatId, failedMessage, { parse_mode: "Markdown" });
+    }
+
+    // Track VERIFY_SUCCESS
+    try {
+        await backendClient.trackAnalyticsEvent({
+            userId,
+            eventType: 'VERIFY_SUCCESS',
+        });
+    } catch (err) {
+        console.error(`[verify] Analytics tracking failed:`, err.message);
     }
 
     await backendClient.markVerified(userId);
