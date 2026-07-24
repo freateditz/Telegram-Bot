@@ -1,14 +1,10 @@
 const dotenv = require("dotenv");
 const path = require("path");
-const result = dotenv.config();
+// Production deployments on Railway provide variables directly via process.env.
+// Load .env only if it exists, without throwing.
+dotenv.config();
 
-if (result.error) {
-  console.error("Error loading .env:", result.error);
-} else {
-  console.log("Successfully loaded .env:", Object.keys(result.parsed || {}).length, "variables");
-}
-
-console.log("DATABASE_URL from process.env:", process.env.DATABASE_URL);
+console.log("DATABASE_URL check:", !!process.env.DATABASE_URL ? "Set" : "Not Set");
 
 /**
  * CORS allowlist resolution.

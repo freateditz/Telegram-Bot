@@ -147,7 +147,15 @@ async function searchUser(req, res) {
 }
 
 async function getTopDownloadedResources(req, res) {
-...
+  const top = await prisma.analyticsEvent.groupBy({
+    by: ['resourceId'],
+    _count: { resourceId: true },
+    where: { resourceId: { not: null }, eventType: 'RESOURCE_DOWNLOAD' },
+    orderBy: { _count: { resourceId: 'desc' } },
+    take: 10,
+  });
+  res.json(top);
+}
 async function getAdvancedAnalytics(req, res) {
   const events = await prisma.analyticsEvent.findMany();
   
