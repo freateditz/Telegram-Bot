@@ -62,43 +62,61 @@ async function getProjects(req, res) {
 
 async function getProjectAnalytics(req, res) {
   const projectId = Number(req.params.projectId);
-  const events = await prisma.analyticsEvent.findMany({
+  
+  // Aggregate event counts directly in the database
+  const eventCounts = await prisma.analyticsEvent.groupBy({
+    by: ['eventType'],
     where: { projectId },
+    _count: true,
   });
 
   const funnel = {
-    PROJECT_OPEN: events.filter(e => e.eventType === 'PROJECT_OPEN').length,
-    YOUTUBE_CLICK: events.filter(e => e.eventType === 'YOUTUBE_CLICK').length,
-    TELEGRAM_CLICK: events.filter(e => e.eventType === 'TELEGRAM_CLICK').length,
-    VERIFY_CLICK: events.filter(e => e.eventType === 'VERIFY_CLICK').length,
-    VERIFY_SUCCESS: events.filter(e => e.eventType === 'VERIFY_SUCCESS').length,
-    RESOURCE_DOWNLOAD: events.filter(e => e.eventType === 'RESOURCE_DOWNLOAD').length,
+    PROJECT_OPEN: 0,
+    YOUTUBE_CLICK: 0,
+    TELEGRAM_CLICK: 0,
+    VERIFY_CLICK: 0,
+    VERIFY_SUCCESS: 0,
+    RESOURCE_DOWNLOAD: 0,
   };
+
+  eventCounts.forEach(e => {
+    if (funnel.hasOwnProperty(e.eventType)) {
+      funnel[e.eventType] = e._count;
+    }
+  });
 
   res.json(funnel);
 }
 
 async function getResourceAnalytics(req, res) {
   const resourceId = Number(req.params.resourceId);
-  const events = await prisma.analyticsEvent.findMany({
-    where: { resourceId, eventType: 'RESOURCE_DOWNLOAD' },
-    orderBy: { createdAt: 'asc' }
-  });
+  const where = { resourceId, eventType: 'RESOURCE_DOWNLOAD' };
 
-  const uniqueUsers = new Set(events.map(e => e.userId)).size;
-  const lastDownload = events.length > 0 ? events[events.length - 1].createdAt : null;
+  // Run database queries in parallel
+  const [totalDownloads, uniqueUsersCount, lastDownloadEvent, dailyDownloadCounts] = await Promise.all([
+    prisma.analyticsEvent.count({ where }),
+    prisma.analyticsEvent.count({ where, distinct: ['userId'] }),
+    prisma.analyticsEvent.findFirst({ where, orderBy: { createdAt: 'desc' } }),
+    prisma.analyticsEvent.groupBy({
+      by: ['createdAt'], // Grouping by createdAt in Postgres might be problematic, should ideally be date-trunc
+      where,
+      _count: true,
+    }),
+  ]);
 
-  // Aggregate daily downloads
-  const dailyDownloads = events.reduce((acc, event) => {
+  // Aggregate daily downloads locally.
+  // NOTE: Better would be date truncation in the DB (Postgres `DATE_TRUNC`).
+  // Given current limitations, this is an acceptable local aggregation.
+  const dailyDownloads = dailyDownloadCounts.reduce((acc, event) => {
     const date = event.createdAt.toISOString().split('T')[0];
-    acc[date] = (acc[date] || 0) + 1;
+    acc[date] = (acc[date] || 0) + event._count;
     return acc;
   }, {});
 
   res.json({
-    totalDownloads: events.length,
-    lastDownload,
-    uniqueUsers,
+    totalDownloads,
+    lastDownload: lastDownloadEvent?.createdAt || null,
+    uniqueUsers: uniqueUsersCount,
     dailyDownloads
   });
 }
@@ -108,15 +126,20 @@ async function getUserActivity(req, res) {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-  const activeEvents = await prisma.analyticsEvent.findMany({
-    where: { createdAt: { gte: thirtyDaysAgo } }
-  });
+  // Run database queries in parallel using aggregation
+  const [dailyActiveUsers, monthlyActiveUsers, returningUsers] = await Promise.all([
+    prisma.analyticsEvent.count({ 
+      where: { createdAt: { gte: oneDayAgo } },
+      distinct: ['userId']
+    }),
+    prisma.analyticsEvent.count({ 
+      where: { createdAt: { gte: thirtyDaysAgo } },
+      distinct: ['userId']
+    }),
+    prisma.user.count({ where: { createdAt: { lt: oneDayAgo } } }),
+  ]);
 
-  const dailyUsers = new Set(activeEvents.filter(e => e.createdAt >= oneDayAgo).map(e => e.userId)).size;
-  const monthlyUsers = new Set(activeEvents.map(e => e.userId)).size;
-  const returningUsers = await prisma.user.count({ where: { createdAt: { lt: oneDayAgo } } });
-
-  res.json({ dailyActiveUsers: dailyUsers, monthlyActiveUsers: monthlyUsers, returningUsers });
+  res.json({ dailyActiveUsers, monthlyActiveUsers, returningUsers });
 }
 
 async function getTopDownloaders(req, res) {
@@ -157,33 +180,44 @@ async function getTopDownloadedResources(req, res) {
   res.json(top);
 }
 async function getAdvancedAnalytics(req, res) {
-  const events = await prisma.analyticsEvent.findMany();
-  
-  // 1. Time Trends
-  const hourly = events.reduce((acc, e) => {
+  // Aggregate data using Prisma to avoid loading all events into memory.
+  const [
+    eventCountsByHour,
+    verifyClicks,
+    verifySuccess,
+    downloads,
+    failures,
+    userDownloadCounts
+  ] = await Promise.all([
+    prisma.analyticsEvent.groupBy({
+      by: ['createdAt'], // NOTE: This might need truncation to hour, but for now just getting counts
+      _count: true,
+    }),
+    prisma.analyticsEvent.count({ where: { eventType: 'VERIFY_CLICK' } }),
+    prisma.analyticsEvent.count({ where: { eventType: 'VERIFY_SUCCESS' } }),
+    prisma.analyticsEvent.count({ where: { eventType: 'RESOURCE_DOWNLOAD' } }),
+    prisma.analyticsEvent.count({ where: { eventType: 'VERIFY_FAILED' } }),
+    prisma.analyticsEvent.groupBy({
+      by: ['userId'],
+      where: { eventType: 'RESOURCE_DOWNLOAD' },
+      _count: true,
+    }),
+  ]);
+
+  // Process hourly trends (simplified)
+  const hourly = eventCountsByHour.reduce((acc, e) => {
     const hour = e.createdAt.getHours();
-    acc[hour] = (acc[hour] || 0) + 1;
+    acc[hour] = (acc[hour] || 0) + e._count;
     return acc;
   }, {});
-  
-  // 2. Verification Conversion
-  const verifyClicks = events.filter(e => e.eventType === 'VERIFY_CLICK').length;
-  const verifySuccess = events.filter(e => e.eventType === 'VERIFY_SUCCESS').length;
+
   const verificationConversion = verifyClicks > 0 ? (verifySuccess / verifyClicks) * 100 : 0;
   
-  // 3. Success/Failure Rates (simplified example)
-  const downloads = events.filter(e => e.eventType === 'RESOURCE_DOWNLOAD').length;
-  const failures = events.filter(e => e.eventType === 'VERIFY_FAILED').length;
   const totalAttempts = downloads + failures;
   const successRate = totalAttempts > 0 ? (downloads / totalAttempts) * 100 : 0;
   
-  // 4. Avg Downloads per User
-  const userDownloads = events.filter(e => e.eventType === 'RESOURCE_DOWNLOAD').reduce((acc, e) => {
-    acc[e.userId] = (acc[e.userId] || 0) + 1;
-    return acc;
-  }, {});
-  const avgDownloadsPerUser = Object.keys(userDownloads).length > 0 
-    ? downloads / Object.keys(userDownloads).length 
+  const avgDownloadsPerUser = userDownloadCounts.length > 0 
+    ? downloads / userDownloadCounts.length 
     : 0;
 
   res.json({
