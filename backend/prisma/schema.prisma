@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 /// A source Telegram channel that holds the actual file messages.
@@ -12,14 +12,13 @@ datasource db {
 /// inside that channel. The bot reads the message directly with
 /// `copyMessage`, so projects never need a `telegramFileId`.
 model Channel {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  channelId String   @unique
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  channelId String    @unique
   username  String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   projects  Project[]
 }
 
@@ -31,82 +30,65 @@ model Channel {
 /// Legacy `telegramFileId` is preserved for backward compatibility.
 /// New projects should always set `channelId` + `messageId`.
 model Project {
-  id        Int      @id @default(autoincrement())
-  title     String
-  slug      String   @unique
-  description String?
-
-  // New delivery model: copy a specific message from a channel.
-  channelId Int?
-  messageId Int?
-
-  // Legacy delivery model (kept for backward compatibility only).
-  telegramFileId String?
-  telegramMessageLink String?
-
-  thumbnail String?
-  isActive  Boolean  @default(true)
-  viewCount Int      @default(0)
-  downloadCount Int      @default(0)
-  failedVerificationCount Int @default(0)
-  lastViewedAt DateTime?
-  lastDownloadedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  channel   Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
-  pendingUsers User[]
+  id                      Int       @id @default(autoincrement())
+  title                   String
+  slug                    String    @unique
+  description             String?
+  telegramFileId          String?
+  thumbnail               String?
+  isActive                Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  downloadCount           Int       @default(0)
+  lastDownloadedAt        DateTime?
+  failedVerificationCount Int       @default(0)
+  lastViewedAt            DateTime?
+  viewCount               Int       @default(0)
+  telegramMessageLink     String?
+  channelId               Int?
+  messageId               Int?
+  channel                 Channel?  @relation(fields: [channelId], references: [id])
+  pendingUsers            User[]
 
   @@index([channelId, messageId])
 }
 
 model Platform {
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-
+  slug      String     @unique
+  createdAt DateTime   @default(now())
   resources Resource[]
 }
 
 model Category {
-  id           Int      @id @default(autoincrement())
+  id           Int        @id @default(autoincrement())
   name         String
-  slug         String   @unique
-  displayOrder Int      @default(0)
-  createdAt    DateTime @default(now())
-
-  resources Resource[]
+  slug         String     @unique
+  displayOrder Int        @default(0)
+  createdAt    DateTime   @default(now())
+  resources    Resource[]
 }
 
 model Resource {
-  id Int @id @default(autoincrement())
-
-  name String
-  slug String?
-
-  description String?
-  version     String?
-
-  platformId Int
-  categoryId Int
-
-  downloadLink String?
-  fixLink      String?
-
+  id                Int      @id @default(autoincrement())
+  name              String
+  slug              String?  @unique
+  description       String?
+  version           String?
+  platformId        Int
+  categoryId        Int
+  downloadLink      String?
+  fixLink           String?
   tutorialChannelId String?
   tutorialMessageId Int?
+  displayOrder      Int      @default(0)
+  isVisible         Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  category          Category @relation(fields: [categoryId], references: [id])
+  platform          Platform @relation(fields: [platformId], references: [id])
 
-  displayOrder Int     @default(0)
-  isVisible    Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  platform Platform @relation(fields: [platformId], references: [id], onDelete: Restrict)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-
-  @@unique([slug])
   @@index([platformId])
   @@index([categoryId])
   @@index([displayOrder])
@@ -119,10 +101,10 @@ model Setting {
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  telegramId String   @unique
-  verified   Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  telegramId       String   @unique
+  verified         Boolean  @default(false)
+  createdAt        DateTime @default(now())
   pendingProjectId Int?
   pendingProject   Project? @relation(fields: [pendingProjectId], references: [id])
 }
