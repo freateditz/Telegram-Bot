@@ -34,6 +34,13 @@ export const API_ROUTES = {
     detail: (platform: string, slug: string) =>
       `/resource/${platform}/${slug}`,
   },
+  analytics: {
+    overview: "/analytics/overview",
+    daily: "/analytics/daily",
+    projects: "/analytics/projects",
+    topProjects: "/analytics/top-projects",
+    recentEvents: "/analytics/recent-events",
+  },
   settings: {
     base: "/settings",
     byId: (id: number | string) => `/settings/${id}`,
