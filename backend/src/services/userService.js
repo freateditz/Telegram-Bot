@@ -98,7 +98,10 @@ async function upsertPendingProject(telegramId, projectId) {
 
 async function clearPendingProject(telegramId) {
   const normalized = String(telegramId).trim();
-  return prisma.user.update({
+  // Use updateMany (not update) so this is a no-op for users that don't
+  // exist yet — /start fires this on every session, including for
+  // brand-new users who have no row in the User table.
+  return prisma.user.updateMany({
     where: { telegramId: normalized },
     data: { pendingProjectId: null },
   });

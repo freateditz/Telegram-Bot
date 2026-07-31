@@ -38,10 +38,11 @@ async function deliverResource(bot, chatId, userId, resource) {
     console.log(`[Resource Deep Link] Preparing download for resource id=${resource.id}, slug=${resource.slug}`);
 
     let deliveredSomething = false;
+    let errorMessage = null;
 
     try {
         await bot.sendMessage(chatId, "✅ Access Verified!\n\nYour resource is ready.");
-        
+
         // 1. Tutorial Message
         if (resource.tutorialChannelId && resource.tutorialMessageId) {
             try {
@@ -93,18 +94,23 @@ async function deliverResource(bot, chatId, userId, resource) {
         // Track download
         console.log(`[Resource Deep Link] Tracking download for resource id=${resource.id}`);
         await backendClient.request(`/api/resources/${resource.id}/download`, { method: "POST" });
-        cacheService.clearPendingResource(userId);
         console.log(`[Resource Deep Link] Delivery complete`);
-        
+
     } catch (error) {
+        errorMessage = error.message;
         console.error(`[Resource Deep Link] Delivery failed user=${userId} resource=${resource.id}:`, error.message);
-        
-        // Only report the error if nothing was successfully delivered
-        if (!deliveredSomething) {
-            return bot.sendMessage(chatId, `❌ Delivery failed: ${error.message}`);
-        } else {
-            console.log(`[Resource Deep Link] Logged partial delivery failure internally, skipping user alert.`);
-        }
+    } finally {
+        // ALWAYS clear the pending pointer — success or failure. This
+        // prevents a partial-failure path from leaving a stale slug
+        // in cacheService that would re-deliver on the next /start.
+        cacheService.clearPendingResource(userId);
+    }
+
+    // Only report the error if nothing was successfully delivered
+    if (errorMessage && !deliveredSomething) {
+        return bot.sendMessage(chatId, `❌ Delivery failed: ${errorMessage}`);
+    } else if (errorMessage) {
+        console.log(`[Resource Deep Link] Logged partial delivery failure internally, skipping user alert.`);
     }
 }
 

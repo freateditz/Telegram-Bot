@@ -130,6 +130,7 @@ async function handleProjectDeepLink(bot, chatId, msg) {
  * clears the pending pointer.
  */
 async function deliverProject(bot, chatId, userId, project, delivery) {
+  let errorMessage = null;
   try {
     await bot.sendMessage(
       chatId,
@@ -182,14 +183,22 @@ async function deliverProject(bot, chatId, userId, project, delivery) {
     backendClient
       .request(`/api/projects/${project.id}/download`, { method: "POST" })
       .catch((err) => console.error(`[project] Download tracking failed for project=${project.id}:`, err.message));
-
+  } catch (error) {
+    errorMessage = error.message;
+    console.error(`[project] Delivery failed user=${userId} project=${project.id}:`, error.message);
+  } finally {
+    // ALWAYS clear the pending pointer — success or failure. A previous
+    // version of this code only cleared inside the try block, so a throw
+    // before line ~187 would leak the pointer into the next session and
+    // re-deliver the same file on the next /start.
     try {
       await backendClient.clearPendingProject(userId);
     } catch (err) {
       console.error(`[project] Failed to clear pending project for user=${userId}:`, err.message);
     }
-  } catch (error) {
-    console.error(`[project] Delivery failed user=${userId} project=${project.id}:`, error.message);
+  }
+
+  if (errorMessage) {
     return bot.sendMessage(
       chatId,
       "❌ An error occurred while sending the file. Please try again or contact the administrator."
