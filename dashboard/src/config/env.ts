@@ -5,7 +5,7 @@
  * frontend composes paths like `${apiBaseUrl}/resources`. Both of
  * the following shapes are valid:
  *
- *   - Local (Vite proxy):   "/api"
+ *   - Local (Vite proxy): "/api"
  *   - Production (absolute): "https://<backend-host>/api"
  *
  * Vite automatically loads:
@@ -31,26 +31,34 @@ interface AppEnv {
 function normalizeBaseUrl(raw: string | undefined): string {
   // Fallback to localhost if not defined
   const baseUrl = raw || "http://localhost:3000/api";
-  
+
   // Strip any trailing slashes so `${apiBaseUrl}/resources` always
   // produces `/api/resources` — never `//resources`.
   return baseUrl.replace(/\/+$/, "");
 }
 
 function readEnv(): AppEnv {
-  // Use VITE_API_URL as the primary variable for the API base URL.
-  const apiBaseUrl = normalizeBaseUrl(import.meta.env.VITE_API_URL);
-  
+  // Use VITE_API_BASE_URL as the single source of truth for the API base URL.
+  const apiBaseUrl = normalizeBaseUrl(
+    import.meta.env.VITE_API_BASE_URL
+  );
+
   console.log("Resolved API URL:", apiBaseUrl);
 
-  const appName = import.meta.env.VITE_APP_NAME || "Admin Dashboard";
+  const appName =
+    import.meta.env.VITE_APP_NAME || "Admin Dashboard";
 
   // The Telegram bot username is used to build the deep-link URL
   // shown to operators. Optional — falls back to the production bot.
   const botUsername =
-    import.meta.env.VITE_BOT_USERNAME || "FreatEditzResources_Bot";
+    import.meta.env.VITE_BOT_USERNAME ||
+    "FreatEditzResources_Bot";
 
-  return { apiBaseUrl, appName, botUsername };
+  return {
+    apiBaseUrl,
+    appName,
+    botUsername,
+  };
 }
 
 export const env: AppEnv = readEnv();
