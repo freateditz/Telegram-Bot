@@ -83,6 +83,19 @@ const getPublicResource = asyncHandler(async (req, res) => {
   });
 });
 
+const trackDownload = asyncHandler(async (req, res) => {
+  const resourceId = Number(req.params.id);
+  try {
+    const resource = await resourceService.getResource(resourceId);
+    if (!resource) {
+      return res.status(404).json({ ok: false, error: "Resource not found" });
+    }
+  } catch (err) {
+    console.warn(`[trackDownload] Database lookup warning for resource=${resourceId}:`, err.message);
+  }
+  res.json({ ok: true });
+});
+
 module.exports = {
   listResources,
   getResource,
@@ -92,4 +105,5 @@ module.exports = {
   deleteResource,
   getMenuResources,
   getPublicResource,
+  trackDownload,
 };

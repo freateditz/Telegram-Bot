@@ -1,4 +1,6 @@
+const path = require("path");
 require("dotenv").config();
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 const TelegramBot = require("node-telegram-bot-api");
 const registerStartCommand = require("./commands/start");
 const handleCallbackQuery = require("./handlers/callbackHandler");
@@ -51,7 +53,27 @@ async function startBot() {
     return botInstance;
 }
 
+async function stopBot() {
+    if (botInstance) {
+        try {
+            console.log("🛑 Stopping Telegram Bot polling...");
+            await botInstance.stopPolling();
+            console.log("✅ Telegram Bot polling stopped");
+        } catch (error) {
+            console.error("Error stopping Telegram Bot polling:", error.message || error);
+        }
+        botInstance = null;
+    }
+}
+
 if (require.main === module) {
+    const shutdown = async () => {
+        await stopBot();
+        process.exit(0);
+    };
+    process.on("SIGTERM", shutdown);
+    process.on("SIGINT", shutdown);
+
     startBot().catch((error) => {
         console.error("Bot failed to start:", error);
         process.exit(1);
@@ -60,4 +82,5 @@ if (require.main === module) {
 
 module.exports = {
     startBot,
+    stopBot,
 };

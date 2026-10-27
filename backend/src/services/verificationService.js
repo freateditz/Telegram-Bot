@@ -51,17 +51,38 @@ async function markUnverified(telegramId) {
     return userService.markUnverifiedByTelegramId(telegramId);
 }
 
+function normalizeChatId(raw) {
+    if (!raw) return "";
+    let cleaned = String(raw).trim();
+    // Strip protocol and t.me/ or telegram.me/
+    cleaned = cleaned.replace(/^https?:\/\/(www\.)?(t|telegram)\.me\//i, "");
+    // Remove query params and trailing slashes
+    cleaned = cleaned.split("?")[0].replace(/\/+$/, "").trim();
+    if (/^-?\d+$/.test(cleaned)) {
+        return cleaned;
+    }
+    if (cleaned && !cleaned.startsWith("@")) {
+        return "@" + cleaned;
+    }
+    return cleaned;
+}
+
 async function isChannelMember(telegramId) {
-    if (!env.telegramChannel || !env.botToken) {
+    let rawChannel = env.telegramChannel;
+    if (!rawChannel) {
+        const channelSetting = await settingService.getSettingByKey("channelLink");
+        rawChannel = channelSetting?.value || "";
+    }
+
+    if (!rawChannel || !env.botToken) {
+        console.error("[isChannelMember] Verification configuration is missing:", {
+            hasChannel: Boolean(rawChannel),
+            hasBotToken: Boolean(env.botToken),
+        });
         throw new HttpError(500, "Telegram verification configuration is missing");
     }
 
-    // Extract chat_id: if it's a URL (https://t.me/username), extract username (@username).
-    // If it's already a username (@username) or ID (-100...), use it as is.
-    let chatId = env.telegramChannel;
-    if (chatId.startsWith("https://t.me/")) {
-        chatId = "@" + chatId.split("https://t.me/")[1];
-    }
+    const chatId = normalizeChatId(rawChannel);
 
     try {
         const response = await fetch(`https://api.telegram.org/bot${env.botToken}/getChatMember`, {
@@ -78,11 +99,16 @@ async function isChannelMember(telegramId) {
         const payload = await response.json();
 
         if (!payload.ok) {
+            console.error(`[isChannelMember] Telegram getChatMember error for user=${telegramId} chat=${chatId}:`, payload.description);
             return false;
         }
 
-        return ["member", "administrator", "creator"].includes(payload.result.status);
+        const status = payload.result?.status;
+        const isMember = payload.result?.is_member;
+
+        return ["member", "administrator", "creator"].includes(status) || (status === "restricted" && isMember === true);
     } catch (error) {
+        console.error(`[isChannelMember] Error checking channel membership for user=${telegramId}:`, error.message);
         return false;
     }
 }

@@ -1,8 +1,9 @@
 const dotenv = require("dotenv");
 const path = require("path");
-// Production deployments on Railway provide variables directly via process.env.
-// Load .env only if it exists, without throwing.
+
+// Load .env from current directory or project root
 dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 console.log("DATABASE_URL check:", !!process.env.DATABASE_URL ? "Set" : "Not Set");
 
@@ -85,8 +86,8 @@ function isOriginAllowed(origin, allowedList) {
 
 module.exports = {
   nodeEnv: process.env.NODE_ENV || "development",
-  port: Number(process.env.BACKEND_PORT || process.env.PORT || 3000),
-  databaseUrl: process.env.DATABASE_URL || "file:./backend/prisma/dev.db",
+  port: Number(process.env.PORT || process.env.BACKEND_PORT || 3000),
+  databaseUrl: process.env.DATABASE_URL || "",
   botToken: process.env.BOT_TOKEN || "",
   telegramChannel: process.env.CHANNEL || "",
   youtubeUrl: process.env.YOUTUBE || "",

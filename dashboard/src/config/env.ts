@@ -38,9 +38,9 @@ function normalizeBaseUrl(raw: string | undefined): string {
 }
 
 function readEnv(): AppEnv {
-  // Use VITE_API_BASE_URL as the single source of truth for the API base URL.
+  // Use VITE_API_BASE_URL (or legacy VITE_API_URL) as the source of truth for the API base URL.
   const apiBaseUrl = normalizeBaseUrl(
-    import.meta.env.VITE_API_BASE_URL
+    import.meta.env.VITE_API_BASE_URL || (import.meta.env as unknown as { VITE_API_URL?: string }).VITE_API_URL
   );
 
   console.log("Resolved API URL:", apiBaseUrl);

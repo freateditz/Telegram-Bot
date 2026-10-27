@@ -54,6 +54,11 @@ function createApp() {
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true }));
 
+  // Health check at root for cloud load balancers and proxies
+  app.get("/health", (req, res) => {
+    res.json({ ok: true, status: "healthy" });
+  });
+
   // Single mount point for every API endpoint.
   app.use("/api", routes);
 

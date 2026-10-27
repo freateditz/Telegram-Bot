@@ -6,13 +6,22 @@ const trackEvent = async ({ userId, projectId, resourceId, eventType, metadata }
       throw new Error('userId and eventType are required');
     }
 
+    // Resolve or upsert the User record so that AnalyticsEvent.userId stores the internal
+    // 32-bit User.id instead of raw Telegram ID which can exceed signed 32-bit integer limits (> 2.14B).
+    const telegramId = String(userId).trim();
+    const user = await prisma.user.upsert({
+      where: { telegramId },
+      create: { telegramId },
+      update: {},
+    });
+
     await prisma.analyticsEvent.create({
       data: {
-        userId,
-        projectId,
-        resourceId,
+        userId: user.id,
+        projectId: projectId ? Number(projectId) : null,
+        resourceId: resourceId ? Number(resourceId) : null,
         eventType,
-        metadata,
+        metadata: metadata || null,
       },
     });
     return { success: true };

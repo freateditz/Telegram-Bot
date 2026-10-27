@@ -2,6 +2,7 @@ const backendClient = require("../services/backendClient");
 const telegramService = require("../services/telegramService");
 const projectService = require("../services/projectService");
 const cacheService = require("../services/cacheService");
+const commonKeyboard = require("../keyboards/commonKeyboard");
 const { deliverProject } = require("./projectHandler");
 const { deliverResource } = require("./resourceHandler");
 
@@ -95,17 +96,24 @@ module.exports = async function handleVerification(bot, query) {
             console.error(`[verify] Analytics tracking failed:`, err.message);
         }
 
+        const prompt = await backendClient.getVerificationPrompt();
         const failedMessage = await telegramService.buildVerificationFailedMessage();
+        const replyMarkup = commonKeyboard.buildVerificationKeyboard({
+            youtubeLink: prompt?.youtubeLink,
+            channelLink: prompt?.channelLink,
+        });
 
         if (projectId) {
             // Track Failed Verification (best-effort, fire-and-forget).
             backendClient
                 .request(`/api/projects/${projectId}/failed-verification`, { method: "POST" })
                 .catch((err) => console.error(`[verify] Failed-verification tracking failed for project=${projectId}:`, err.message));
-            return bot.sendMessage(chatId, failedMessage, { parse_mode: "Markdown" });
         }
 
-        return bot.sendMessage(chatId, failedMessage, { parse_mode: "Markdown" });
+        return bot.sendMessage(chatId, failedMessage, {
+            parse_mode: "Markdown",
+            reply_markup: replyMarkup,
+        });
     }
 
     // Track VERIFY_SUCCESS

@@ -5,7 +5,9 @@ const { startBot } = require("./bot/bot");
 
 async function bootstrap() {
     await startServer();
-    await startBot();
+    if (process.env.BOT_TOKEN && process.env.BOT_TOKEN.trim()) {
+        await startBot();
+    }
 }
 
 bootstrap().catch((error) => {
