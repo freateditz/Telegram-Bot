@@ -66,6 +66,11 @@ async function stopBot() {
     }
 }
 
+process.on("unhandledRejection", (reason) => {
+    const msg = reason?.message || reason;
+    console.warn("⚠️ Telegram Bot unhandled error caught (process preserved):", typeof msg === "string" ? msg : "Telegram request rejected");
+});
+
 if (require.main === module) {
     const shutdown = async () => {
         await stopBot();

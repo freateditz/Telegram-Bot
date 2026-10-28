@@ -38,6 +38,6 @@ module.exports = {
   ],
   settings: [
     { key: "youtubeLink", value: process.env.YOUTUBE || "" },
-    { key: "channelLink", value: process.env.CHANNEL || "" },
+    { key: "channelLink", value: process.env.CHANNEL_LINK || (process.env.CHANNEL ? (process.env.CHANNEL.startsWith("@") ? `https://t.me/${process.env.CHANNEL.slice(1)}` : process.env.CHANNEL) : "") },
   ],
 };

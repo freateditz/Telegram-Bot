@@ -71,6 +71,11 @@ async function gracefulShutdown(signal) {
     }
 }
 
+process.on("unhandledRejection", (reason) => {
+    const msg = reason?.message || reason;
+    console.warn("⚠️ Unhandled error caught (process preserved):", typeof msg === "string" ? msg : "Request rejected");
+});
+
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 

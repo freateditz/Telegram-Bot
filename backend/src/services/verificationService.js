@@ -7,17 +7,22 @@ function buildChannelLink(channel) {
     if (!channel) {
         return "";
     }
-
-    if (String(channel).startsWith("@")) {
-        return `https://t.me/${String(channel).slice(1)}`;
+    const trimmed = String(channel).trim();
+    if (trimmed.startsWith("@")) {
+        return `https://t.me/${trimmed.slice(1)}`;
     }
-
-    return "https://t.me/freat_editz";
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        return trimmed;
+    }
+    return `https://t.me/${trimmed}`;
 }
 
 async function getVerificationPrompt() {
     const youtubeSetting = await settingService.getSettingByKey("youtubeLink");
     const channelSetting = await settingService.getSettingByKey("channelLink");
+
+    const rawChannel = channelSetting?.value || env.channelLink || env.telegramChannel;
+    const channelLink = buildChannelLink(rawChannel);
 
     return {
         ok: true,
@@ -29,7 +34,7 @@ async function getVerificationPrompt() {
             "Click Verify",
         ],
         youtubeLink: youtubeSetting?.value || env.youtubeUrl || "",
-        channelLink: channelSetting?.value || env.channelLink || buildChannelLink(env.telegramChannel),
+        channelLink,
     };
 }
 

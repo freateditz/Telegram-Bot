@@ -24,67 +24,69 @@ module.exports = function registerStartCommand(bot) {
         const userId = msg.from.id;
         const payload = match[1] ? match[1].trim() : "";
 
-        // Track BOT_START
         try {
-            await backendClient.trackAnalyticsEvent({
-                userId,
-                eventType: 'BOT_START',
-                metadata: { payload }
-            });
-        } catch (err) {
-            console.error(`[start] Analytics tracking failed:`, err.message);
-        }
+            // Track BOT_START
+            try {
+                await backendClient.trackAnalyticsEvent({
+                    userId,
+                    eventType: 'BOT_START',
+                    metadata: { payload }
+                });
+            } catch (err) {
+                console.error(`[start] Analytics tracking failed:`, err.message);
+            }
 
-        // --- Purge every per-session pointer BEFORE doing anything else. ---
-        // This is the single source of truth for "start fresh". It must run
-        // for every /start, regardless of whether a deep-link payload is
-        // present, so that a prior session can never bleed into the new one.
+            // --- Purge every per-session pointer BEFORE doing anything else. ---
+            // 1. Verified flag — re-run subscription check this session.
+            try {
+                await backendClient.markUnverified(userId);
+            } catch (err) {
+                console.error(`[start] markUnverified failed for user=${userId}:`, err.message);
+                try {
+                    return await bot.sendMessage(chatId, "⚠️ Service temporarily unavailable. Please try again later.");
+                } catch (sendErr) {
+                    console.error(`[start] Failed to send error message to chat=${chatId}:`, sendErr.message);
+                    return;
+                }
+            }
 
-        // 1. Verified flag — re-run subscription check this session.
-        try {
-            await backendClient.markUnverified(userId);
-        } catch (err) {
-            console.error(`[start] markUnverified failed for user=${userId}:`, err.message);
-            // Gracefully handle backend failure; do not crash the bot.
-            return bot.sendMessage(chatId, "⚠️ Service temporarily unavailable. Please try again later.");
-        }
+            // 2. Pending project pointer (DB).
+            try {
+                await backendClient.clearPendingProject(userId);
+            } catch (err) {
+                console.error(`[start] clearPendingProject failed for user=${userId}:`, err.message);
+            }
 
-        // 2. Pending project pointer (DB). If a previous deep link set this
-        //    and delivery threw before clearPendingProject ran, it would
-        //    otherwise survive into the new session and re-deliver the
-        //    same file the moment the user clicks Verify again.
-        try {
-            await backendClient.clearPendingProject(userId);
-        } catch (err) {
-            console.error(`[start] clearPendingProject failed for user=${userId}:`, err.message);
-            // Non-fatal — we still continue. The markUnverified call is
-            // the critical one; this is a defense-in-depth cleanup.
-        }
+            // 3. Pending resource slug (in-memory).
+            try {
+                cacheService.clearPendingResource(userId);
+            } catch (err) {
+                console.error(`[start] clearPendingResource failed for user=${userId}:`, err.message);
+            }
 
-        // 3. Pending resource slug (in-memory). Same reason as above:
-        //    a leftover slug would cause routeAfterVerification to
-        //    re-deliver the previous resource after the user re-verifies.
-        try {
-            cacheService.clearPendingResource(userId);
-        } catch (err) {
-            console.error(`[start] clearPendingResource failed for user=${userId}:`, err.message);
-        }
+            if (payload.startsWith("project_")) {
+                return await handleProjectDeepLink(bot, chatId, msg);
+            }
 
-        if (payload.startsWith("project_")) {
-            return handleProjectDeepLink(bot, chatId, msg);
-        }
+            if (payload.startsWith("resource_")) {
+                return await handleResourceDeepLink(bot, chatId, msg);
+            }
 
-        if (payload.startsWith("resource_")) {
-            return handleResourceDeepLink(bot, chatId, msg);
-        }
-
-        // Plain /start — verification is required every session.
-        try {
-            const prompt = await backendClient.getVerificationPrompt();
-            return telegramService.sendVerificationPrompt(bot, chatId, prompt);
-        } catch (err) {
-            console.error(`[start] getVerificationPrompt failed for user=${userId}:`, err.message);
-            return bot.sendMessage(chatId, "⚠️ Service temporarily unavailable. Please try again later.");
+            // Plain /start — verification is required every session.
+            try {
+                const prompt = await backendClient.getVerificationPrompt();
+                return await telegramService.sendVerificationPrompt(bot, chatId, prompt);
+            } catch (err) {
+                console.error(`[start] getVerificationPrompt failed for user=${userId}:`, err.message);
+                try {
+                    return await bot.sendMessage(chatId, "⚠️ Service temporarily unavailable. Please try again later.");
+                } catch (sendErr) {
+                    console.error(`[start] Failed to send error message to chat=${chatId}:`, sendErr.message);
+                    return;
+                }
+            }
+        } catch (fatalErr) {
+            console.error(`[start] Error in /start command for user=${userId}:`, fatalErr.message || fatalErr);
         }
     });
 };
